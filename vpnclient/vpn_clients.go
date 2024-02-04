@@ -1,10 +1,13 @@
 package vpnclient
 
-import "pearson-vpn-service/supervisor"
+import (
+	"pearson-vpn-service/supervisor"
+	"pearson-vpn-service/vpnclient/expressvpn"
+)
 
 type Client struct {
 	Binary         string
-	Config         string
+	ConfigManager  *expressvpn.ConfigFileManager
 	ProcessManager *supervisor.ProcessManager
 }
 
