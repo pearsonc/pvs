@@ -9,19 +9,13 @@ import (
 )
 
 func main() {
-	log.Println("Starting pvs...")
-	log.Println("Creating Supervisor")
 	sysctlSupervisor := supervisor.NewManager()
-	log.Println("Supervisor created")
-
-	log.Println("Creating VPN Client")
 	vpnClient, err := vpnclient.NewClient(sysctlSupervisor)
-	log.Println("VPN Client created")
 	if err != nil {
 		log.Fatalf("Error creating VPN client: %v", err)
 	}
 	err = vpnClient.StartVPN()
-	log.Println("Attempting to start VPN...")
+	log.Println("Attempting to connect to VPN...")
 	if err != nil {
 		log.Fatalf("Error starting VPN: %v", err)
 	}
@@ -31,9 +25,10 @@ func main() {
 		log.Println("Process Output: ", sysctlSupervisor.GetProcessOutput(vpnClient.ProcessIdName))
 		log.Fatalf("VPN failed to start")
 	}
+	log.Println("VPN connected successfully...")
 
 	// Set up a simple HTTP server
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, err := w.Write([]byte("PVS is running"))
 		if err != nil {
@@ -42,7 +37,7 @@ func main() {
 	})
 
 	// Start the HTTP server
-	port := "8080"
+	port := "80"
 	log.Printf("Starting HTTP server on port %s", port)
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatalf("Failed to start HTTP server: %v", err)

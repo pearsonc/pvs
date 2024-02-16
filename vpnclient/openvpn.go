@@ -28,10 +28,6 @@ func (vpn *Client) StartVPN() error {
 	if err != nil {
 		return err
 	}
-
-	status := vpn.ProcessManager.GetStatus(vpn.ProcessIdName)
-	println("Process ID: ", vpn.ProcessIdName, "Status: ", status)
-
 	return nil
 }
 
