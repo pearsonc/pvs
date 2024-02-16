@@ -1,0 +1,13 @@
+version: '3.8'
+
+#This docker service is for testing purposes only, this service is designed to be run on a gateway server outside of docker.
+#This docker service is designed to test that a vpn connection can be established from within a docker container before attempting to run the vpn service on a gateway server.
+services:
+  pvs:  # Pearson VPN Service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun

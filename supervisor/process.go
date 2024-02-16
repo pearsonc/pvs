@@ -1,29 +1,32 @@
 package supervisor
 
 import (
+	"bytes"
 	"errors"
 	"os/exec"
 	"sync"
 )
 
-// Process represents a single managed process
 type Process struct {
 	Cmd    *exec.Cmd
 	ID     string
 	Status string
+	Output *bytes.Buffer
 	mutex  sync.Mutex
 }
 
-// NewProcess creates a new Process instance
 func NewProcess(name string, args ...string) *Process {
+	outputBuffer := &bytes.Buffer{}
+	cmd := exec.Command(name, args...)
+	cmd.Stdout = outputBuffer
+
 	return &Process{
-		Cmd:    exec.Command(name, args...),
+		Cmd:    cmd,
 		ID:     name,
 		Status: "initialised",
+		Output: outputBuffer,
 	}
 }
-
-// Start begins the execution of the process
 func (p *Process) Start() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
@@ -42,8 +45,6 @@ func (p *Process) Start() error {
 	go p.wait()
 	return nil
 }
-
-// Stop terminates the process
 func (p *Process) Stop() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
@@ -60,21 +61,25 @@ func (p *Process) Stop() error {
 	p.Status = "stopped"
 	return nil
 }
-
-// wait waits for the process to exit and updates the status
 func (p *Process) wait() {
 	err := p.Cmd.Wait()
-	if err != nil {
-		return
-	}
 	p.mutex.Lock()
-	p.Status = "stopped"
-	p.mutex.Unlock()
+	defer p.mutex.Unlock()
+	if err != nil {
+		// Log the error, or handle it as needed
+		p.Status = "failed"
+	} else {
+		p.Status = "stopped"
+	}
 }
 
-// GetStatus returns the current status of the process
 func (p *Process) GetStatus() string {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	return p.Status
+}
+func (p *Process) GetOutput() string {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	return p.Output.String()
 }

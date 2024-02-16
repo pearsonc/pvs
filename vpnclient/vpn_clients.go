@@ -9,6 +9,7 @@ type Client struct {
 	Binary         string
 	ConfigManager  *expressvpn.ConfigFileManager
 	ProcessManager *supervisor.ProcessManager
+	ProcessIdName  string
 }
 
 type ClientInterface interface {

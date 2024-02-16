@@ -9,12 +9,10 @@ import (
 var _ ClientInterface = (*Client)(nil)
 
 func NewClient(ProcessManager *supervisor.ProcessManager) (*Client, error) {
-
 	conf, err := expressvpn.NewConfigFileManager()
 	if err != nil {
 		return nil, fmt.Errorf("error creating config manager: %w", err)
 	}
-
 	client := &Client{
 		Binary:         "openvpn",
 		ProcessManager: ProcessManager,
@@ -24,14 +22,15 @@ func NewClient(ProcessManager *supervisor.ProcessManager) (*Client, error) {
 }
 
 func (vpn *Client) StartVPN() error {
+	connectionArgs := []string{"--config", vpn.ConfigManager.Dir + vpn.ConfigManager.FileName, "--auth-nocache"}
+	vpn.ProcessIdName = vpn.ProcessManager.CreateProcess(vpn.Binary, connectionArgs...)
+	err := vpn.ProcessManager.StartProcess(vpn.ProcessIdName)
+	if err != nil {
+		return err
+	}
 
-	/*	connectionArgs := []string{"--config", vpn.ConfigManager.FileName, "--auth-nocache"}
-		processID := vpn.ProcessManager.CreateProcess(vpn.Binary, connectionArgs...)
-		err := vpn.ProcessManager.StartProcess(processID)
-
-		if err != nil {
-			return err
-		}*/
+	status := vpn.ProcessManager.GetStatus(vpn.ProcessIdName)
+	println("Process ID: ", vpn.ProcessIdName, "Status: ", status)
 
 	return nil
 }

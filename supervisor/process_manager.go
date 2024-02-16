@@ -54,3 +54,27 @@ func (pm *ProcessManager) GetAllProcesses() map[string]*Process {
 
 	return pm.processes
 }
+
+func (pm *ProcessManager) GetStatus(id string) string {
+	pm.mutex.RLock()
+	defer pm.mutex.RUnlock()
+
+	process, ok := pm.processes[id]
+	if !ok {
+		return "not found"
+	}
+
+	return process.Status
+}
+
+func (pm *ProcessManager) GetProcessOutput(id string) string {
+	pm.mutex.RLock()
+	defer pm.mutex.RUnlock()
+
+	process, ok := pm.processes[id]
+	if !ok {
+		return "Process not found"
+	}
+
+	return process.GetOutput()
+}

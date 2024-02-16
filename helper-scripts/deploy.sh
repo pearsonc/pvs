@@ -8,9 +8,9 @@ sudo apt-get update
 sudo apt-get install -y resolvconf
 
 # Set variables for clarity
-REPO_DIR="/tmp/home-lab/pearson-vpn-service"
-VPN_CONFIGS_DIR="/tmp/home-lab/pearson-vpn-service/vpn-configs"
-BINARY_PATH="/etc/pvs/wd40vpn.bin"
+REPO_DIR="/tmp/pearson-vpn-service"
+VPN_CONFIGS_DIR="/tmp/pearson-vpn-service/vpn-configs"
+BINARY_PATH="/etc/pvs/pvs.bin"
 SERVICE_PATH="/etc/pvs"
 SERVICE_FILE="pvs.service"
 SYSTEMD_PATH="/etc/systemd/system"
