@@ -16,9 +16,10 @@ type ConfigFileManager struct {
 	FileName         string
 }
 
+// NewConfigFileManager @TODO: Implement config file to make Dir and PreferredConfigs configurable
 func NewConfigFileManager() (*ConfigFileManager, error) {
 	ConfigFile := &ConfigFileManager{
-		Dir:              "vpn_configs/",                                                  //configDir,
+		Dir:              "vpn_configs/",
 		PreferredConfigs: "my_expressvpn_andorra_udp.ovpn,my_expressvpn_austria_udp.ovpn", //os.Getenv("VPN_CONFIGS"),
 	}
 	if err := ConfigFile.initialise(); err != nil {
@@ -26,6 +27,9 @@ func NewConfigFileManager() (*ConfigFileManager, error) {
 	}
 	return ConfigFile, nil
 }
+
+// initialise @TODO: Implement logging mechanism, at present logging output can be captured using journal.
+// initialise @NOTE: sudo journalctl -u pvs.service -f
 func (config *ConfigFileManager) initialise() error {
 	file, err := config.getRandomConfigFile()
 	if err != nil {
