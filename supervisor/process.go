@@ -10,7 +10,7 @@ import (
 type Process struct {
 	Cmd    *exec.Cmd
 	ID     string
-	Status string
+	Status ProcessStatus
 	Output *bytes.Buffer
 	mutex  sync.Mutex
 }
@@ -23,7 +23,7 @@ func NewProcess(name string, args ...string) *Process {
 	return &Process{
 		Cmd:    cmd,
 		ID:     name,
-		Status: "initialised",
+		Status: Initialising,
 		Output: outputBuffer,
 	}
 }
@@ -31,17 +31,17 @@ func (p *Process) Start() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	if p.Status != "initialised" && p.Status != "stopped" {
+	if p.Status != Initialising && p.Status != Stopped {
 		return errors.New("process already started or not in a restartable state")
 	}
 
 	err := p.Cmd.Start()
 	if err != nil {
-		p.Status = "failed"
+		p.Status = Failed
 		return err
 	}
 
-	p.Status = "running"
+	p.Status = Running
 	go p.wait()
 	return nil
 }
@@ -49,7 +49,7 @@ func (p *Process) Stop() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	if p.Status != "running" {
+	if p.Status != Running {
 		return errors.New("process not running")
 	}
 
@@ -58,7 +58,7 @@ func (p *Process) Stop() error {
 		return err
 	}
 
-	p.Status = "stopped"
+	p.Status = Stopped
 	return nil
 }
 func (p *Process) wait() {
@@ -67,13 +67,13 @@ func (p *Process) wait() {
 	defer p.mutex.Unlock()
 	if err != nil {
 		// Log the error, or handle it as needed
-		p.Status = "failed"
+		p.Status = Failed
 	} else {
-		p.Status = "stopped"
+		p.Status = Stopped
 	}
 }
 
-func (p *Process) GetStatus() string {
+func (p *Process) GetStatus() ProcessStatus {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	return p.Status

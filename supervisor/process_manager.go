@@ -1,6 +1,7 @@
 package supervisor
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 )
@@ -55,16 +56,16 @@ func (pm *ProcessManager) GetAllProcesses() map[string]*Process {
 	return pm.processes
 }
 
-func (pm *ProcessManager) GetStatus(id string) string {
+func (pm *ProcessManager) GetStatus(id string) (ProcessStatus, error) {
 	pm.mutex.RLock()
 	defer pm.mutex.RUnlock()
 
 	process, ok := pm.processes[id]
 	if !ok {
-		return "not found"
+		return Failed, errors.New("process not found")
 	}
 
-	return process.Status
+	return process.Status, nil
 }
 
 func (pm *ProcessManager) GetProcessOutput(id string) string {

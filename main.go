@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"pearson-vpn-service/supervisor"
 	"pearson-vpn-service/vpnclient"
 	"time"
@@ -20,10 +21,13 @@ func main() {
 		log.Fatalf("Error starting VPN: %v", err)
 	}
 	time.Sleep(10 * time.Second)
-	if sysctlSupervisor.GetStatus(vpnClient.ProcessIdName) != "running" {
-		log.Println("VPN Status: ", sysctlSupervisor.GetStatus(vpnClient.ProcessIdName))
+	processStatus, err := sysctlSupervisor.GetStatus(vpnClient.ProcessIdName)
+	if processStatus != supervisor.Running {
+		log.Println("VPN Status: ", processStatus.String())
 		log.Println("Process Output: ", sysctlSupervisor.GetProcessOutput(vpnClient.ProcessIdName))
 		log.Fatalf("VPN failed to start")
+	} else {
+		log.Println("VPN Status: ", processStatus.String())
 	}
 	log.Println("VPN connected successfully...")
 
@@ -35,11 +39,19 @@ func main() {
 			return
 		}
 	})
+	startServer()
 
-	// Start the HTTP server
-	port := "80"
-	log.Printf("Starting HTTP server on port %s", port)
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
-		log.Fatalf("Failed to start HTTP server: %v", err)
+}
+
+func startServer() {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // Default port if not specified
 	}
+
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

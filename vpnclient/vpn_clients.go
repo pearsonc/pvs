@@ -17,7 +17,6 @@ type ClientInterface interface {
 	StopVPN() error
 	RestartVPN() error
 	RotateVPN() error
-
 	getConfig() *Client
 	validateConfig() error
 }
