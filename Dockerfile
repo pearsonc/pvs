@@ -14,7 +14,7 @@ RUN apk add --no-cache openvpn openresolv htop
 WORKDIR /app/
 
 COPY --from=builder /app/bin/pvs.bin .
-COPY --from=builder /app/vpnclient/expressvpn/vpn_configs vpn_configs/
+COPY --from=builder /app/vpnclient/openvpn/expressvpn/vpn_configs vpn_configs/
 COPY --from=builder /app/openvpn-credentials.txt /config/openvpn-credentials.txt
 
 RUN chmod 600 /config/openvpn-credentials.txt

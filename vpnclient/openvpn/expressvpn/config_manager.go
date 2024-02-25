@@ -10,57 +10,50 @@ import (
 	"time"
 )
 
-type ConfigFileManager struct {
-	Dir              string
-	PreferredConfigs string
-	FileName         string
-}
-
-// NewConfigFileManager @TODO: Implement config file to make Dir and PreferredConfigs configurable
-func NewConfigFileManager() (*ConfigFileManager, error) {
-	ConfigFile := &ConfigFileManager{
-		Dir:              "vpn_configs/",
-		PreferredConfigs: "my_expressvpn_andorra_udp.ovpn,my_expressvpn_austria_udp.ovpn", //os.Getenv("VPN_CONFIGS"),
+// NewConfigFileManager @TODO: Implement config file to make dir and preferredConfigs configurable
+func NewConfigFileManager() (ConfigFileManager, error) {
+	ConfigFile := &configFileManager{
+		dir:              "vpn_configs/",
+		preferredConfigs: "", //os.Getenv("VPN_CONFIGS"),
 	}
-	if err := ConfigFile.initialise(); err != nil {
+
+	if err := ConfigFile.Initialise(); err != nil {
 		return nil, err
 	}
 	return ConfigFile, nil
 }
 
-// initialise @TODO: Implement logging mechanism, at present logging output can be captured using journal.
-// initialise @NOTE: sudo journalctl -u pvs.service -f
-func (config *ConfigFileManager) initialise() error {
+// Initialise @TODO: Implement logging mechanism, at present logging output can be captured using journal.
+// Initialise @NOTE: sudo journalctl -u pvs.service -f
+func (config *configFileManager) Initialise() error {
 	file, err := config.getRandomConfigFile()
 	if err != nil {
 		return err
 	}
-	config.FileName = file
-	log.Println("Config file set to:", config.FileName)
-	log.Println("Config file path set to:", config.Dir)
+	config.fileName = file
 	err = config.validateConfigFile()
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (config *ConfigFileManager) getRandomConfigFile() (string, error) {
+func (config *configFileManager) getRandomConfigFile() (string, error) {
 
 	// Create random value using time
 	source := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(source)
 
-	if len(config.PreferredConfigs) > 0 {
-		configList := strings.Split(config.PreferredConfigs, ",")
+	if len(config.preferredConfigs) > 0 {
+		configList := strings.Split(config.preferredConfigs, ",")
 		randomConfig := strings.TrimSpace(configList[r.Intn(len(configList))])
 		fileName := randomConfig
-		if _, err := os.Stat(config.Dir + fileName); err == nil {
+		if _, err := os.Stat(config.dir + fileName); err == nil {
 			return fileName, nil
 		} else {
 			return "", fmt.Errorf("the config file you provided does not exist: %v", fileName)
 		}
 	} else { // No Preferred configs found, move on and randomly select any
-		dir, err := os.Open(config.Dir)
+		dir, err := os.Open(config.dir)
 		if err != nil {
 			return "", fmt.Errorf("failed to open directory: %v", err)
 		}
@@ -85,7 +78,7 @@ func (config *ConfigFileManager) getRandomConfigFile() (string, error) {
 		return randomFile, nil
 	}
 }
-func (config *ConfigFileManager) validateConfigFile() error {
+func (config *configFileManager) validateConfigFile() error {
 
 	if err := config.setupResolveConf(); err != nil {
 		return err
@@ -101,7 +94,7 @@ func (config *ConfigFileManager) validateConfigFile() error {
 	}
 	return nil
 }
-func (config *ConfigFileManager) setupResolveConf() error {
+func (config *configFileManager) setupResolveConf() error {
 
 	// Check if resolvconf is installed
 	_, err := exec.LookPath("resolvconf")
@@ -117,7 +110,7 @@ func (config *ConfigFileManager) setupResolveConf() error {
 		"up /etc/openvpn/update-resolv-conf",
 		"down /etc/openvpn/update-resolv-conf",
 	}
-	content, err := os.ReadFile(config.Dir + config.FileName)
+	content, err := os.ReadFile(config.dir + config.fileName)
 	if err != nil {
 		return fmt.Errorf("error config manger - setupResolveConf error reading file: %v", err)
 	}
@@ -135,16 +128,16 @@ func (config *ConfigFileManager) setupResolveConf() error {
 				text += "\n" + line
 			}
 		}
-		err = os.WriteFile(config.Dir+config.FileName, []byte(text), 0644)
+		err = os.WriteFile(config.dir+config.fileName, []byte(text), 0644)
 		if err != nil {
 			return fmt.Errorf("error config manger - setupResolveConf error writing modified content back to file: %v", err)
 		}
 	}
 	return nil
 }
-func (config *ConfigFileManager) setupCiphersAndCerts() error {
+func (config *configFileManager) setupCiphersAndCerts() error {
 
-	filePath := config.Dir + config.FileName
+	filePath := config.dir + config.fileName
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("error config manger - setupCiphersAndCerts error reading file: %v", err)
@@ -166,28 +159,28 @@ func (config *ConfigFileManager) setupCiphersAndCerts() error {
 	}
 	return nil
 }
-func (config *ConfigFileManager) setupDefaultGateway() error {
+func (config *configFileManager) setupDefaultGateway() error {
 	// Remove any existing redirect-gateway directives
-	sedCmd := exec.Command("sed", "-i", "/redirect-gateway/d", config.Dir+config.FileName)
+	sedCmd := exec.Command("sed", "-i", "/redirect-gateway/d", config.dir+config.fileName)
 	err := sedCmd.Run()
 	if err != nil {
 		return fmt.Errorf("error executing third sed command: %v", err)
 	}
-	sedCmd1 := exec.Command("sed", "-i", "$a redirect-gateway def1", config.Dir+config.FileName)
+	sedCmd1 := exec.Command("sed", "-i", "$a redirect-gateway def1", config.dir+config.fileName)
 	err = sedCmd1.Run()
 	if err != nil {
 		return fmt.Errorf("error executing fourth sed command: %v", err)
 	}
 	return nil
 }
-func (config *ConfigFileManager) setupKeepAlive() error {
+func (config *configFileManager) setupKeepAlive() error {
 	// Check if "keepalive" already exists in the file
-	grepCmdKeepAlive := exec.Command("grep", "-q", "keepalive 60 120", config.Dir+config.FileName)
+	grepCmdKeepAlive := exec.Command("grep", "-q", "keepalive 60 120", config.dir+config.fileName)
 	err := grepCmdKeepAlive.Run()
 
 	// If "keepalive" doesn't exist, add it
 	if err != nil {
-		sedCmdKeepAlive := exec.Command("sed", "-i", "$a keepalive 60 120", config.Dir+config.FileName)
+		sedCmdKeepAlive := exec.Command("sed", "-i", "$a keepalive 60 120", config.dir+config.fileName)
 		err = sedCmdKeepAlive.Run()
 		if err != nil {
 			return fmt.Errorf("error adding keepalive settings: %v", err)
@@ -195,4 +188,11 @@ func (config *ConfigFileManager) setupKeepAlive() error {
 	}
 
 	return nil
+}
+
+func (config *configFileManager) GetConfigDir() string {
+	return config.dir
+}
+func (config *configFileManager) GetFileName() string {
+	return config.fileName
 }

@@ -4,82 +4,96 @@ import (
 	"bytes"
 	"errors"
 	"os/exec"
-	"sync"
 )
 
-type Process struct {
-	Cmd    *exec.Cmd
-	ID     string
-	Status ProcessStatus
-	Output *bytes.Buffer
-	mutex  sync.Mutex
-}
-
-func NewProcess(name string, args ...string) *Process {
+func NewProcess(name string, args ...string) Process {
 	outputBuffer := &bytes.Buffer{}
 	cmd := exec.Command(name, args...)
 	cmd.Stdout = outputBuffer
 
-	return &Process{
-		Cmd:    cmd,
-		ID:     name,
-		Status: Initialising,
-		Output: outputBuffer,
+	return &process{
+		cmd:    cmd,
+		id:     name,
+		status: Initialising,
+		output: outputBuffer,
 	}
 }
-func (p *Process) Start() error {
+func (p *process) Start() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	if p.Status != Initialising && p.Status != Stopped {
+	if p.status != Initialising && p.status != Stopped {
 		return errors.New("process already started or not in a restartable state")
 	}
 
-	err := p.Cmd.Start()
+	err := p.cmd.Start()
 	if err != nil {
-		p.Status = Failed
+		p.status = Failed
 		return err
 	}
 
-	p.Status = Running
+	p.status = Running
 	go p.wait()
 	return nil
 }
-func (p *Process) Stop() error {
+func (p *process) Stop() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	if p.Status != Running {
+	if p.status != Running {
 		return errors.New("process not running")
 	}
 
-	err := p.Cmd.Process.Kill()
+	err := p.cmd.Process.Kill()
 	if err != nil {
 		return err
 	}
 
-	p.Status = Stopped
+	p.status = Stopped
 	return nil
 }
-func (p *Process) wait() {
-	err := p.Cmd.Wait()
+func (p *process) Restart() error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	if p.status != Running {
+		return errors.New("process not running")
+	}
+
+	err := p.cmd.Process.Kill()
+	if err != nil {
+		return err
+	}
+
+	p.status = Restarting
+	return p.Start()
+
+}
+func (p *process) wait() {
+	err := p.cmd.Wait()
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	if err != nil {
 		// Log the error, or handle it as needed
-		p.Status = Failed
+		p.status = Failed
 	} else {
-		p.Status = Stopped
+		p.status = Stopped
 	}
 }
 
-func (p *Process) GetStatus() ProcessStatus {
+func (p *process) GetStatus() ProcessStatus {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	return p.Status
+	return p.status
 }
-func (p *Process) GetOutput() string {
+func (p *process) GetOutput() string {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	return p.Output.String()
+	return p.output.String()
+}
+
+func (p *process) GetProcessID() string {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	return p.id
 }
