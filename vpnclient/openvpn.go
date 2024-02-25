@@ -38,12 +38,7 @@ func (vpn *client) StopVPN() error {
 }
 
 func (vpn *client) RestartVPN() error {
-
-	err := vpn.StopVPN()
-	if err != nil {
-		return err
-	}
-	err = vpn.StartVPN()
+	err := vpn.processManager.RestartProcess(vpn.processId)
 	if err != nil {
 		return err
 	}
