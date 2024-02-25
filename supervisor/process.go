@@ -3,7 +3,11 @@ package supervisor
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"os"
 	"os/exec"
+	"syscall"
+	"time"
 )
 
 func NewProcess(name string, args ...string) Process {
@@ -14,15 +18,50 @@ func NewProcess(name string, args ...string) Process {
 	return &process{
 		cmd:    cmd,
 		id:     name,
+		args:   args,
 		status: Initialising,
 		output: outputBuffer,
 	}
+}
+
+func (p *process) reinitialise() error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	fmt.Printf("Reinitialising process %s\n", p.id)
+	if p.cmd.Process != nil {
+		if err := p.cmd.Process.Signal(syscall.Signal(0)); err != nil {
+			if errors.Is(err, os.ErrProcessDone) {
+				fmt.Printf("Process %s has finished.\n", p.id)
+			} else {
+				fmt.Printf("Error signaling process %s (it might be dead): %v\n", p.id, err)
+			}
+		} else {
+			if err1 := p.cmd.Process.Kill(); err != nil {
+				fmt.Printf("Error killing process %s: %v\n", p.id, err)
+				return err1
+			}
+		}
+	}
+	p.status = Restarting
+	p.output.Reset()
+	p.cmd = exec.Command(p.id, p.args...)
+	p.cmd.Stdout = p.output
+	time.Sleep(2 * time.Second)
+	p.mutex.Unlock()
+	err := p.Start()
+	p.mutex.Lock()
+	if err != nil {
+		fmt.Printf("Error restarting process %s: %v\n", p.id, err)
+		return err
+	}
+
+	return nil
 }
 func (p *process) Start() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	if p.status != Initialising && p.status != Stopped {
+	if p.status != Initialising && p.status != Stopped && p.status != Restarting {
 		return errors.New("process already started or not in a restartable state")
 	}
 

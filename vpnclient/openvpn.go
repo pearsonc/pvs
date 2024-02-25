@@ -26,6 +26,7 @@ func (vpn *client) StartVPN() error {
 	if err != nil {
 		return err
 	}
+	vpn.processManager.StartMonitor()
 	return nil
 }
 

@@ -47,6 +47,21 @@ func (pm *processManager) StopProcess(id string) error {
 	return p.Stop()
 }
 
+func (pm *processManager) ReinitialiseProcess(id string) error {
+	var p Process
+	var ok bool
+	pm.mutex.RLock()
+	p, ok = pm.processes[id]
+	pm.mutex.RUnlock()
+
+	if !ok {
+		return fmt.Errorf("process with ID %s not found", id)
+	}
+
+	return p.reinitialise()
+
+}
+
 func (pm *processManager) RestartProcess(id string) error {
 	var p Process
 	var ok bool
@@ -90,4 +105,26 @@ func (pm *processManager) GetProcessOutput(id string) string {
 	}
 
 	return p.GetOutput()
+}
+
+func (pm *processManager) StartMonitor() {
+	pm.mutex.Lock()
+	defer pm.mutex.Unlock()
+
+	if pm.monitor == nil {
+		pm.monitor = NewProcessMonitorInstance(pm)
+	} else {
+		pm.monitor.StopMonitoring() // Ensure only one monitoring goroutine is running
+	}
+	pm.monitor.StartMonitoring()
+}
+
+func (pm *processManager) StopMonitor() {
+	pm.mutex.Lock()
+	defer pm.mutex.Unlock()
+
+	if pm.monitor != nil {
+		pm.monitor.StopMonitoring()
+		pm.monitor = nil
+	}
 }
