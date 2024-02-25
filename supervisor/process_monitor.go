@@ -20,6 +20,11 @@ func NewProcessMonitorInstance(processManager ProcessManager) ProcessMonitor {
 }
 
 func (pm *processMonitor) StartMonitoring() {
+	pm.mutex.Lock()
+	if pm.stopChan == nil {
+		pm.stopChan = make(chan struct{})
+	}
+	pm.mutex.Unlock()
 	go func() {
 		ticker := time.NewTicker(time.Duration(pm.checkInterval) * time.Second)
 		defer ticker.Stop()
@@ -42,7 +47,6 @@ func (pm *processMonitor) StartMonitoring() {
 							fmt.Printf("Maximum restart attempts reached for process %s\n", p.GetProcessID())
 						}
 					}
-					fmt.Printf("Process %s is %s\n", p.GetProcessID(), p.GetStatus().String())
 				}
 			case <-pm.stopChan:
 				return
@@ -52,7 +56,13 @@ func (pm *processMonitor) StartMonitoring() {
 }
 
 func (pm *processMonitor) StopMonitoring() {
-	close(pm.stopChan)
+	pm.mutex.Lock()
+	defer pm.mutex.Unlock()
+
+	if pm.stopChan != nil {
+		close(pm.stopChan)
+		pm.stopChan = nil
+	}
 }
 
 func (pm *processMonitor) getAllProcesses() map[string]Process {

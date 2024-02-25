@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"pearson-vpn-service/api/web"
 	"pearson-vpn-service/supervisor"
@@ -10,6 +11,8 @@ import (
 
 // main @TODO: change sleep time to a more reliable method check output of process for success
 func main() {
+
+	fmt.Println("Starting VPN Service...")
 	if vpnClient, err := vpnclient.NewClient(); err != nil {
 		log.Fatalf("Error creating VPN client: %v", err)
 	} else {
@@ -25,6 +28,7 @@ func main() {
 				log.Println("Process Output: ", vpnClient.GetProcessOutput())
 				log.Fatalf("VPN failed to start")
 			}
+			fmt.Printf("VPN started successfully\n")
 
 			server := web.NewServer(vpnClient)
 			server.Start(8080)

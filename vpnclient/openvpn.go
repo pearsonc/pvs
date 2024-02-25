@@ -1,9 +1,11 @@
 package vpnclient
 
 import (
+	"context"
 	"fmt"
 	"pearson-vpn-service/supervisor"
 	"pearson-vpn-service/vpnclient/openvpn/expressvpn"
+	"time"
 )
 
 func NewClient() (Client, error) {
@@ -27,10 +29,14 @@ func (vpn *client) StartVPN() error {
 		return err
 	}
 	vpn.processManager.StartMonitor()
+	go vpn.EnableRotateVPN()
 	return nil
 }
 
 func (vpn *client) StopVPN() error {
+	if vpn.cancelRotate != nil {
+		vpn.cancelRotate() // Stop the rotation goroutine
+	}
 	err := vpn.processManager.StopProcess(vpn.processId)
 	if err != nil {
 		return err
@@ -38,6 +44,7 @@ func (vpn *client) StopVPN() error {
 	return nil
 }
 
+// RestartVPN @TODO: Make rotation time configurable
 func (vpn *client) RestartVPN() error {
 	err := vpn.processManager.RestartProcess(vpn.processId)
 	if err != nil {
@@ -46,20 +53,40 @@ func (vpn *client) RestartVPN() error {
 	return nil
 }
 
-func (vpn *client) RotateVPN() error {
-	err := vpn.StopVPN()
-	if err != nil {
-		return err
+func (vpn *client) EnableRotateVPN() {
+	ctx, cancel := context.WithCancel(context.Background())
+	vpn.cancelRotate = cancel
+	ticker := time.NewTicker(15 * time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done(): // Check if the context has been cancelled
+			break
+		case <-ticker.C:
+			fmt.Println("Rotating VPN connection...")
+			err := vpn.configManager.Initialise()
+			if err != nil {
+				fmt.Println("Error rotating VPN connection: ", err)
+				break
+			}
+			vpn.processManager.StopMonitor()
+			err = vpn.StopVPN()
+			if err != nil {
+				fmt.Println("Error rotating VPN connection: ", err)
+				break
+			}
+			err = vpn.StartVPN()
+			if err != nil {
+				fmt.Println("Error rotating VPN connection: ", err)
+				break
+			}
+			vpn.processManager.StartMonitor()
+			fmt.Println("Rotated VPN connection successfully")
+		}
+
+		return
 	}
-	err = vpn.configManager.Initialise()
-	if err != nil {
-		return err
-	}
-	err = vpn.StartVPN()
-	if err != nil {
-		return err
-	}
-	return nil
+
 }
 
 func (vpn *client) GetActiveConfig() string {

@@ -13,6 +13,7 @@ type processMonitor struct {
 	stopChan       chan struct{}
 	retry          int
 	retryCounts    map[string]int
+	mutex          sync.Mutex
 }
 
 type ProcessMonitor interface {

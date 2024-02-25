@@ -74,7 +74,6 @@ func (config *configFileManager) getRandomConfigFile() (string, error) {
 		}
 
 		randomFile := files[r.Intn(len(files))]
-		log.Println("Using config file:", randomFile)
 		return randomFile, nil
 	}
 }

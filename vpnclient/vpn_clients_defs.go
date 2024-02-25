@@ -1,6 +1,7 @@
 package vpnclient
 
 import (
+	"context"
 	"pearson-vpn-service/supervisor"
 	"pearson-vpn-service/vpnclient/openvpn/expressvpn"
 )
@@ -10,13 +11,14 @@ type client struct {
 	configManager  expressvpn.ConfigFileManager
 	processManager supervisor.ProcessManager
 	processId      string
+	cancelRotate   context.CancelFunc
 }
 
 type Client interface {
 	StartVPN() error
 	StopVPN() error
 	RestartVPN() error
-	RotateVPN() error
+	EnableRotateVPN()
 	GetActiveConfig() string
 	GetConfigDir() string
 	GetProcessId() string
