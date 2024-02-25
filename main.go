@@ -16,7 +16,7 @@ func main() {
 		if err := vpnClient.StartVPN(); err != nil {
 			log.Fatalf("Error starting VPN: %v", err)
 		}
-		time.Sleep(10 * time.Second) // leave time for the VPN to start
+		time.Sleep(5 * time.Second) // leave time for the VPN to start
 		if processStatus, err := vpnClient.GetStatus(); err != nil {
 			log.Fatalf("Error getting VPN status: %v", err)
 		} else {
