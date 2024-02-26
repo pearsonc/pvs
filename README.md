@@ -89,7 +89,7 @@ git clone git@github.com:pearsonc/pvs.git /tmp/pvs-build
 cd /tmp/pvs-build
 make build
 sudo cp bin/pvs /etc/pvs/pvs
-sudo cp -r bin/vpn-configs /etc/pvs/vpn-configs
+sudo cp -r bin/vpn_configs /etc/pvs/vpn_configs
 sudo cp pvs.service /etc/systemd/system/pvs.service
 ```
 
