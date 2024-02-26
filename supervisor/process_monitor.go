@@ -2,6 +2,7 @@ package supervisor
 
 import (
 	"fmt"
+	"pearson-vpn-service/logconfig"
 	"time"
 )
 
@@ -37,8 +38,8 @@ func (pm *processMonitor) StartMonitoring() {
 						if pm.retryCounts[id] < pm.retry {
 							err := p.reinitialise()
 							if err != nil {
-								fmt.Printf("Error restarting process %s: %v\n", p.GetProcessID(), err)
-								fmt.Printf("Retry attempt %d for process %s\n", pm.retryCounts[id], p.GetProcessID())
+								logconfig.Log.Printf("Error restarting process %s: %v\n", p.GetProcessID(), err)
+								logconfig.Log.Printf("Retry attempt %d for process %s\n", pm.retryCounts[id], p.GetProcessID())
 								pm.retryCounts[id]++
 							} else {
 								pm.retryCounts[id] = 0

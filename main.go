@@ -2,11 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"pearson-vpn-service/api/web"
+	"pearson-vpn-service/logconfig"
 	"pearson-vpn-service/supervisor"
 	"pearson-vpn-service/vpnclient"
 	"syscall"
@@ -19,38 +18,37 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-
-	fmt.Println("Starting VPN Service...")
+	logconfig.Log.Info("Starting VPN Service...")
 	vpnClient, err := vpnclient.NewClient()
 	if err != nil {
-		log.Fatalf("Error creating VPN client: %v", err)
+		logconfig.Log.Fatalf("Error creating VPN client: %v", err)
 	}
 
 	if err := vpnClient.StartVPN(); err != nil {
-		log.Fatalf("Error starting VPN: %v", err)
+		logconfig.Log.Fatalf("Error starting VPN: %v", err)
 	}
 
 	time.Sleep(5 * time.Second)
 
 	processStatus, err := vpnClient.GetStatus()
 	if err != nil {
-		log.Fatalf("Error getting VPN status: %v", err)
+		logconfig.Log.Fatalf("Error getting VPN status: %v", err)
 	} else if processStatus != supervisor.Running {
-		log.Println("VPN Status: ", processStatus.String())
-		log.Println("Process Output: ", vpnClient.GetProcessOutput())
-		log.Fatalf("VPN failed to start")
+		logconfig.Log.Println("VPN Status: ", processStatus.String())
+		logconfig.Log.Println("Process Output: ", vpnClient.GetProcessOutput())
+		logconfig.Log.Fatalf("VPN failed to start")
 	}
 
-	fmt.Printf("VPN started successfully\n")
+	logconfig.Log.Println("VPN started successfully")
 	server := web.NewServer(vpnClient)
 	go server.Start(ctx)
 
 	select {
 	case <-c:
-		log.Println("Received shutdown signal")
+		logconfig.Log.Println("Received shutdown signal")
 		err := vpnClient.StopVPN()
 		if err != nil {
-			log.Fatalf("Failed to run vpnClient.StopVPN(): %v", err)
+			logconfig.Log.Fatalf("Failed to run vpnClient.StopVPN(): %v", err)
 		}
 		cancel()
 	}

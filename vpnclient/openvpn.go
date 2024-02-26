@@ -3,8 +3,8 @@ package vpnclient
 import (
 	"context"
 	"fmt"
-	"log"
 	"pearson-vpn-service/firewall"
+	"pearson-vpn-service/logconfig"
 	"pearson-vpn-service/supervisor"
 	"pearson-vpn-service/vpnclient/openvpn/expressvpn"
 	"time"
@@ -39,39 +39,23 @@ func (vpn *client) StartVPN() error {
 }
 
 func (vpn *client) StopVPN() error {
-
-	fmt.Println("Stopping VPN... Called ")
-	fmt.Println("VPN process is running: ", vpn.processManager.IsProcessRunning(vpn.processId))
 	if !vpn.processManager.IsProcessRunning(vpn.processId) {
-		log.Println("VPN process is not running, no need to stop it.")
+		logconfig.Log.Println("VPN process is not running, no need to stop it.")
 		return nil
 	} else {
-		fmt.Println("VPN process is running, stopping it now")
+		logconfig.Log.Println("VPN process is running, stopping it now")
 		err := vpn.processManager.StopProcess(vpn.processId)
 		if err != nil {
 			return err
 		}
 	}
-
-	fmt.Printf("Blocking firewall traffic\n")
+	logconfig.Log.Println("Stopping Firewall Traffic")
 	vpn.stopTraffic()
-
-	fmt.Printf("Stopping VPN Rotation routine\n")
 	if vpn.cancelRotate != nil {
+		logconfig.Log.Println("Cancelling VPN rotation")
 		vpn.cancelRotate()
 	}
-
 	return nil
-
-	/*	vpn.stopTraffic()
-		if vpn.cancelRotate != nil {
-			vpn.cancelRotate()
-		}
-		err := vpn.processManager.StopProcess(vpn.processId)
-		if err != nil {
-			return err
-		}
-		return nil*/
 }
 
 // RestartVPN @TODO: Make rotation time configurable
@@ -92,27 +76,27 @@ func (vpn *client) EnableRotateVPN() {
 		case <-ctx.Done():
 			break
 		case <-ticker.C:
-			fmt.Println("Rotating VPN connection...")
+			logconfig.Log.Println("Rotating VPN connection...")
 			err := vpn.configManager.Initialise()
 			if err != nil {
+				logconfig.Log.Println("Error rotating VPN connection: ", err)
 				fmt.Println("Error rotating VPN connection: ", err)
 				break
 			}
 			vpn.processManager.StopMonitor()
 			err = vpn.StopVPN()
 			if err != nil {
-				fmt.Println("Error rotating VPN connection: ", err)
+				logconfig.Log.Println("Error rotating VPN connection: ", err)
 				break
 			}
 			err = vpn.StartVPN()
 			if err != nil {
-				fmt.Println("Error rotating VPN connection: ", err)
+				logconfig.Log.Println("Error rotating VPN connection: ", err)
 				break
 			}
 			vpn.processManager.StartMonitor()
-			fmt.Println("Rotated VPN connection successfully")
+			logconfig.Log.Println("Rotated VPN connection successfully")
 		}
-
 		return
 	}
 
@@ -134,13 +118,12 @@ func (vpn *client) GetProcessOutput() string {
 }
 func (vpn *client) allowTraffic() {
 	if fireErr := vpn.firewallManager.AllowTraffic(); fireErr != nil {
-		log.Println("error allowing traffic:", fireErr)
-		panic(fireErr)
+		logconfig.Log.Fatalf("error allowing traffic: %v", fireErr)
 	}
 }
 func (vpn *client) stopTraffic() {
 	if fireErr := vpn.firewallManager.StopTraffic(); fireErr != nil {
-		log.Println("error stopping traffic:", fireErr)
+		logconfig.Log.Fatalf("error stopping traffic: %v", fireErr)
 		panic(fireErr)
 	}
 }
