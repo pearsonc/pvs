@@ -77,6 +77,7 @@ func (vpn *client) StopVPN() error {
 		logconfig.Log.Println("Cancelling VPN rotation")
 		vpn.cancelRotate()
 	}
+	logconfig.Log.Println("VPN process stopped successfully")
 	return nil
 }
 

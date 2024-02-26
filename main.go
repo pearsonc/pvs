@@ -47,6 +47,7 @@ func main() {
 	case <-c:
 		logconfig.Log.Println("Received shutdown signal")
 		err := vpnClient.StopVPN()
+		logconfig.Log.Println("PVS Stopped")
 		if err != nil {
 			logconfig.Log.Fatalf("Failed to run vpnClient.StopVPN(): %v", err)
 		}
