@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"pearson-vpn-service/logconfig"
 	"strings"
 	"time"
 )
@@ -52,6 +53,7 @@ func (config *configFileManager) getRandomConfigFile() (string, error) {
 		} else {
 			return "", fmt.Errorf("the config file you provided does not exist: %v", fileName)
 		}
+		logconfig.Log.Println("Using random config file from environment var:", randomConfig)
 	} else { // No Preferred configs found, move on and randomly select any
 		dir, err := os.Open(config.dir)
 		if err != nil {
@@ -74,6 +76,7 @@ func (config *configFileManager) getRandomConfigFile() (string, error) {
 		}
 
 		randomFile := files[r.Intn(len(files))]
+		logconfig.Log.Println("No preferred config found, using random config file:", randomFile)
 		return randomFile, nil
 	}
 }
