@@ -8,7 +8,7 @@ import (
 
 func NewFirewallManager() Firewall {
 	return &firewall{
-		adpName:        "eth1",
+		adpName:        "eth0",
 		privateNetwork: "192.168.1.0/24",
 	}
 }
