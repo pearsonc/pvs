@@ -9,7 +9,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/pvs.bin ./m
 FROM alpine:latest
 
 RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
-RUN apk add --no-cache openvpn openresolv htop
+RUN apk add --no-cache openvpn openresolv htop iptables
 
 WORKDIR /app/
 

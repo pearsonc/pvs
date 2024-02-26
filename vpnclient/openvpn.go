@@ -41,18 +41,26 @@ func (vpn *client) StartVPN() error {
 func (vpn *client) StopVPN() error {
 
 	fmt.Println("Stopping VPN... Called ")
+	fmt.Println("VPN process is running: ", vpn.processManager.IsProcessRunning(vpn.processId))
 	if !vpn.processManager.IsProcessRunning(vpn.processId) {
 		log.Println("VPN process is not running, no need to stop it.")
 		return nil
+	} else {
+		fmt.Println("VPN process is running, stopping it now")
+		err := vpn.processManager.StopProcess(vpn.processId)
+		if err != nil {
+			return err
+		}
 	}
+
+	fmt.Printf("Blocking firewall traffic\n")
 	vpn.stopTraffic()
+
+	fmt.Printf("Stopping VPN Rotation routine\n")
 	if vpn.cancelRotate != nil {
 		vpn.cancelRotate()
 	}
-	err := vpn.processManager.StopProcess(vpn.processId)
-	if err != nil {
-		return err
-	}
+
 	return nil
 
 	/*	vpn.stopTraffic()
