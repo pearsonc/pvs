@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"os/signal"
 	"pearson-vpn-service/api/web"
 	"pearson-vpn-service/supervisor"
@@ -15,9 +16,10 @@ import (
 // main @TODO: change sleep time to a more reliable method check output of process for success
 func main() {
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
-	
+	ctx, cancel := context.WithCancel(context.Background())
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+
 	fmt.Println("Starting VPN Service...")
 	vpnClient, err := vpnclient.NewClient()
 	if err != nil {
@@ -41,12 +43,15 @@ func main() {
 
 	fmt.Printf("VPN started successfully\n")
 	server := web.NewServer(vpnClient)
-	go server.Start(8080)
+	go server.Start(ctx)
 
-	<-ctx.Done()
-	fmt.Println("Shutdown signal received, stopping services...")
-	if err := vpnClient.StopVPN(); err != nil {
-		log.Fatalf("Failed to stop VPN: %v", err)
+	select {
+	case <-c:
+		log.Println("Received shutdown signal")
+		err := vpnClient.StopVPN()
+		if err != nil {
+			log.Fatalf("Failed to run vpnClient.StopVPN(): %v", err)
+		}
+		cancel()
 	}
-	fmt.Println("VPN service stopped.")
 }

@@ -1,9 +1,10 @@
 package web
 
 import (
-	"fmt"
+	"context"
 	"log"
 	"net/http"
+	"os"
 	"pearson-vpn-service/vpnclient"
 )
 
@@ -16,12 +17,23 @@ func NewServer(vpnClient vpnclient.Client) *Server {
 		VpnClient: vpnClient,
 	}
 }
-func (s *Server) Start(port int) {
-	http.HandleFunc("/status", s.handleStatus)
-	log.Printf("Starting server on port %d...\n", port)
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+func (s *Server) Start(ctx context.Context) {
+
+	http.HandleFunc("/", s.handleStatus)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // Default port if not specified
 	}
+
+	server := &http.Server{Addr: ":" + port}
+
+	go func() {
+		log.Fatal(server.ListenAndServe())
+	}()
+
+	<-ctx.Done()
+	server.Shutdown(ctx)
 }
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
