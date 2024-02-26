@@ -40,22 +40,23 @@ func (vpn *client) StartVPN() error {
 	if err != nil {
 		return err
 	}
-
-	// Wait for connection confirmation
 	stdoutStream, err := vpn.processManager.GetStdoutStream(vpn.processId)
 	if err != nil {
 		return err
 	}
-
 	scanner := bufio.NewScanner(stdoutStream)
-
+	logconfig.Log.Println("Waiting for OpenVPN connection to be established...")
 	if waitErr := vpn.waitForConnection(scanner); waitErr != nil {
 		return waitErr
 	}
-
+	logconfig.Log.Println("OpenVPN connection established successfully!")
+	logconfig.Log.Println("Routing all traffic through VPN...")
 	vpn.allowTraffic()
+	logconfig.Log.Println("Enabling VPN process monitor...")
 	vpn.processManager.StartMonitor()
+	logconfig.Log.Println("Enabling VPN rotation...")
 	go vpn.EnableRotateVPN()
+
 	return nil
 }
 
@@ -70,7 +71,7 @@ func (vpn *client) StopVPN() error {
 			return err
 		}
 	}
-	logconfig.Log.Println("Stopping Firewall Traffic")
+	logconfig.Log.Println("Blocking all traffic")
 	vpn.stopTraffic()
 	if vpn.cancelRotate != nil {
 		logconfig.Log.Println("Cancelling VPN rotation")
@@ -183,7 +184,7 @@ func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
 				return nil
 			} else {
 				// Debug by showing all output
-				logconfig.Log.Println(msg)
+				//logconfig.Log.Println(msg)
 				/*time.Sleep(1 * time.Second)*/
 				//log.Println(msg)
 				//time.Sleep(1 * time.Second)
