@@ -128,3 +128,16 @@ func (pm *processManager) StopMonitor() {
 		pm.monitor = nil
 	}
 }
+
+func (pm *processManager) IsProcessRunning(id string) bool {
+	pm.mutex.RLock()
+	defer pm.mutex.RUnlock()
+
+	p, ok := pm.processes[id]
+	if !ok {
+		return false
+	}
+
+	status := p.GetStatus()
+	return status == Running
+}

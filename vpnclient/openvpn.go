@@ -39,6 +39,11 @@ func (vpn *client) StartVPN() error {
 }
 
 func (vpn *client) StopVPN() error {
+
+	if !vpn.processManager.IsProcessRunning(vpn.processId) {
+		log.Println("VPN process is not running, no need to stop it.")
+		return nil
+	}
 	vpn.stopTraffic()
 	if vpn.cancelRotate != nil {
 		vpn.cancelRotate()
@@ -48,6 +53,16 @@ func (vpn *client) StopVPN() error {
 		return err
 	}
 	return nil
+
+	/*	vpn.stopTraffic()
+		if vpn.cancelRotate != nil {
+			vpn.cancelRotate()
+		}
+		err := vpn.processManager.StopProcess(vpn.processId)
+		if err != nil {
+			return err
+		}
+		return nil*/
 }
 
 // RestartVPN @TODO: Make rotation time configurable
@@ -58,7 +73,6 @@ func (vpn *client) RestartVPN() error {
 	}
 	return nil
 }
-
 func (vpn *client) EnableRotateVPN() {
 	ctx, cancel := context.WithCancel(context.Background())
 	vpn.cancelRotate = cancel
@@ -100,7 +114,6 @@ func (vpn *client) GetActiveConfig() string {
 func (vpn *client) GetConfigDir() string {
 	return vpn.configManager.GetConfigDir()
 }
-
 func (vpn *client) GetProcessId() string {
 	return vpn.processId
 }

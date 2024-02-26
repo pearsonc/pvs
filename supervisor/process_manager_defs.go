@@ -19,4 +19,5 @@ type ProcessManager interface {
 	GetProcessOutput(id string) string
 	StartMonitor()
 	StopMonitor()
+	IsProcessRunning(id string) bool
 }
