@@ -134,9 +134,6 @@ func (vpn *client) GetProcessId() string {
 func (vpn *client) GetStatus() (supervisor.ProcessStatus, error) {
 	return vpn.processManager.GetStatus(vpn.processId)
 }
-func (vpn *client) GetProcessOutput() string {
-	return vpn.processManager.GetProcessOutput(vpn.processId)
-}
 func (vpn *client) allowTraffic() {
 	if fireErr := vpn.firewallManager.AllowTraffic(); fireErr != nil {
 		logconfig.Log.Fatalf("error allowing traffic: %v", fireErr)
