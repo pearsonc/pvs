@@ -48,12 +48,13 @@ func (config *configFileManager) getRandomConfigFile() (string, error) {
 		configList := strings.Split(config.preferredConfigs, ",")
 		randomConfig := strings.TrimSpace(configList[r.Intn(len(configList))])
 		fileName := randomConfig
+
+		logconfig.Log.Println("Preferred config files found, selected at random:", fileName)
 		if _, err := os.Stat(config.dir + fileName); err == nil {
 			return fileName, nil
 		} else {
 			return "", fmt.Errorf("the config file you provided does not exist: %v", fileName)
 		}
-		logconfig.Log.Println("Using random config file from environment var:", randomConfig)
 	} else { // No Preferred configs found, move on and randomly select any
 		dir, err := os.Open(config.dir)
 		if err != nil {
@@ -76,7 +77,7 @@ func (config *configFileManager) getRandomConfigFile() (string, error) {
 		}
 
 		randomFile := files[r.Intn(len(files))]
-		logconfig.Log.Println("No preferred config found, using random config file:", randomFile)
+		logconfig.Log.Println("No preferred config files found, selected a random file from config dir:", randomFile)
 		return randomFile, nil
 	}
 }
