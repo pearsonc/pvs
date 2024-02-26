@@ -42,12 +42,15 @@ func (vpn *client) StartVPN() error {
 	}
 
 	// Wait for connection confirmation
-	stdout := vpn.processManager.GetProcessOutput(vpn.processId)
-	reader := strings.NewReader(stdout)
-	scanner := bufio.NewScanner(reader)
+	stdoutStream, err := vpn.processManager.GetStdoutStream(vpn.processId)
+	if err != nil {
+		return err
+	}
 
-	if err := vpn.waitForConnection(scanner); err != nil {
+	scanner := bufio.NewScanner(stdoutStream)
 
+	if waitErr := vpn.waitForConnection(scanner); waitErr != nil {
+		return waitErr
 	}
 
 	vpn.allowTraffic()

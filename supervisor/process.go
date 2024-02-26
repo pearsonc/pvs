@@ -1,9 +1,9 @@
 package supervisor
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"syscall"
@@ -11,16 +11,18 @@ import (
 )
 
 func NewProcess(name string, args ...string) Process {
-	outputBuffer := &bytes.Buffer{}
+
 	cmd := exec.Command(name, args...)
-	cmd.Stdout = outputBuffer
+	stdout, _ := cmd.StdoutPipe()
+	stderr, _ := cmd.StderrPipe()
 
 	return &process{
 		cmd:    cmd,
 		id:     name,
 		args:   args,
 		status: Initialising,
-		output: outputBuffer,
+		stdout: stdout,
+		stderr: stderr,
 	}
 }
 
@@ -43,9 +45,9 @@ func (p *process) reinitialise() error {
 		}
 	}
 	p.status = Restarting
-	p.output.Reset()
+	//p.output.Reset()
 	p.cmd = exec.Command(p.id, p.args...)
-	p.cmd.Stdout = p.output
+	//p.cmd.Stdout = p.output
 	time.Sleep(2 * time.Second)
 	p.mutex.Unlock()
 	err := p.Start()
@@ -125,10 +127,8 @@ func (p *process) GetStatus() ProcessStatus {
 	defer p.mutex.Unlock()
 	return p.status
 }
-func (p *process) GetOutput() string {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-	return p.output.String()
+func (p *process) GetStdoutStream() io.ReadCloser {
+	return p.stdout
 }
 
 func (p *process) GetProcessID() string {

@@ -1,6 +1,9 @@
 package supervisor
 
-import "sync"
+import (
+	"io"
+	"sync"
+)
 
 type processManager struct {
 	processes map[string]Process
@@ -16,7 +19,7 @@ type ProcessManager interface {
 	RestartProcess(id string) error
 	GetAllProcesses() map[string]Process
 	GetStatus(id string) (ProcessStatus, error)
-	GetProcessOutput(id string) string
+	GetStdoutStream(id string) (io.ReadCloser, error)
 	StartMonitor()
 	StopMonitor()
 	IsProcessRunning(id string) bool

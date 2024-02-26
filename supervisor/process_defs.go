@@ -1,7 +1,7 @@
 package supervisor
 
 import (
-	"bytes"
+	"io"
 	"os/exec"
 	"sync"
 )
@@ -11,7 +11,8 @@ type process struct {
 	id     string
 	args   []string
 	status ProcessStatus
-	output *bytes.Buffer
+	stdout io.ReadCloser
+	stderr io.ReadCloser
 	mutex  sync.Mutex
 }
 
@@ -22,6 +23,6 @@ type Process interface {
 	Restart() error
 	wait()
 	GetStatus() ProcessStatus
-	GetOutput() string
 	GetProcessID() string
+	GetStdoutStream() io.ReadCloser
 }

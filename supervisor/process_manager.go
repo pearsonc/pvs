@@ -3,6 +3,7 @@ package supervisor
 import (
 	"errors"
 	"fmt"
+	"io"
 )
 
 func NewManager() ProcessManager {
@@ -95,16 +96,16 @@ func (pm *processManager) GetStatus(id string) (ProcessStatus, error) {
 	return p.GetStatus(), nil
 }
 
-func (pm *processManager) GetProcessOutput(id string) string {
+func (pm *processManager) GetStdoutStream(id string) (io.ReadCloser, error) {
 	pm.mutex.RLock()
 	defer pm.mutex.RUnlock()
 
 	p, ok := pm.processes[id]
 	if !ok {
-		return "Process not found"
+		return nil, fmt.Errorf("process with ID %s not found", id)
 	}
 
-	return p.GetOutput()
+	return p.GetStdoutStream(), nil
 }
 
 func (pm *processManager) StartMonitor() {
