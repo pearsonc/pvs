@@ -14,7 +14,7 @@ import (
 func NewConfigFileManager() (ConfigFileManager, error) {
 	ConfigFile := &configFileManager{
 		dir:              "vpn_configs/",
-		preferredConfigs: "", //os.Getenv("VPN_CONFIGS"),
+		preferredConfigs: os.Getenv("VPN_CONFIGS"),
 	}
 
 	if err := ConfigFile.Initialise(); err != nil {
