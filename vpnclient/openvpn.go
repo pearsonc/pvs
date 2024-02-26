@@ -184,7 +184,7 @@ func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
 			} else {
 				// Debug by showing all output
 				logconfig.Log.Println(msg)
-				time.Sleep(1 * time.Second)
+				/*time.Sleep(1 * time.Second)*/
 				//log.Println(msg)
 				//time.Sleep(1 * time.Second)
 			}
