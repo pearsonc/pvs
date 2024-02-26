@@ -1,14 +1,22 @@
 package vpnclient
 
 import (
+	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"pearson-vpn-service/firewall"
 	"pearson-vpn-service/logconfig"
 	"pearson-vpn-service/supervisor"
 	"pearson-vpn-service/vpnclient/openvpn/expressvpn"
+	"strings"
 	"time"
 )
+
+type Message struct {
+	Line    string
+	Success bool
+}
 
 func NewClient() (Client, error) {
 	ProcessManager := supervisor.NewManager()
@@ -32,6 +40,16 @@ func (vpn *client) StartVPN() error {
 	if err != nil {
 		return err
 	}
+
+	// Wait for connection confirmation
+	stdout := vpn.processManager.GetProcessOutput(vpn.processId)
+	reader := strings.NewReader(stdout)
+	scanner := bufio.NewScanner(reader)
+
+	if err := vpn.waitForConnection(scanner); err != nil {
+
+	}
+
 	vpn.allowTraffic()
 	vpn.processManager.StartMonitor()
 	go vpn.EnableRotateVPN()
@@ -58,7 +76,7 @@ func (vpn *client) StopVPN() error {
 	return nil
 }
 
-// RestartVPN @TODO: Make rotation time configurable
+// RestartVPN @TODO: Make add checks for VPN connection status
 func (vpn *client) RestartVPN() error {
 	err := vpn.processManager.RestartProcess(vpn.processId)
 	if err != nil {
@@ -125,5 +143,54 @@ func (vpn *client) stopTraffic() {
 	if fireErr := vpn.firewallManager.StopTraffic(); fireErr != nil {
 		logconfig.Log.Fatalf("error stopping traffic: %v", fireErr)
 		panic(fireErr)
+	}
+}
+
+func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
+	ch := make(chan Message, 100)
+
+	go func() {
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.Contains(line, "RTNETLINK") {
+				continue
+			}
+
+			if strings.Contains(line, "Initialization Sequence Completed") {
+				ch <- Message{Success: true}
+				return
+			} else if strings.Contains(line, "DEPRECATED OPTION:") || strings.Contains(line, "WARNING:") {
+				ch <- Message{Line: line}
+			} else {
+				ch <- Message{Line: line}
+			}
+		}
+		if err := scanner.Err(); err != nil {
+			ch <- Message{Line: err.Error()}
+		}
+		close(ch)
+	}()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Listen for messages on the channel
+	for {
+		select {
+		case msg := <-ch:
+			if msg.Success {
+				logconfig.Log.Println("OpenVPN connection established successfully!")
+				return nil
+			} else {
+				// Debug by showing all output
+				//log.Println(msg)
+				//time.Sleep(1 * time.Second)
+			}
+		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				logconfig.Log.Println("Timed out waiting for OpenVPN to connect.")
+			}
+			return ctx.Err()
+		}
 	}
 }
