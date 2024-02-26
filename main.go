@@ -15,14 +15,14 @@ import (
 // main @TODO: change sleep time to a more reliable method check output of process for success
 func main() {
 
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+	
 	fmt.Println("Starting VPN Service...")
 	vpnClient, err := vpnclient.NewClient()
 	if err != nil {
 		log.Fatalf("Error creating VPN client: %v", err)
 	}
-
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
 
 	if err := vpnClient.StartVPN(); err != nil {
 		log.Fatalf("Error starting VPN: %v", err)
