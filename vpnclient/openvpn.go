@@ -40,6 +40,7 @@ func (vpn *client) StartVPN() error {
 
 func (vpn *client) StopVPN() error {
 
+	fmt.Println("Stopping VPN... Called ")
 	if !vpn.processManager.IsProcessRunning(vpn.processId) {
 		log.Println("VPN process is not running, no need to stop it.")
 		return nil
