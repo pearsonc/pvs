@@ -25,7 +25,6 @@ type Client interface {
 	GetConfigDir() string
 	GetProcessId() string
 	GetStatus() (supervisor.ProcessStatus, error)
-	GetProcessOutput() string
 
 	allowTraffic()
 	stopTraffic()
