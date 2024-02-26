@@ -3,6 +3,8 @@ package vpnclient
 import (
 	"context"
 	"fmt"
+	"log"
+	"pearson-vpn-service/firewall"
 	"pearson-vpn-service/supervisor"
 	"pearson-vpn-service/vpnclient/openvpn/expressvpn"
 	"time"
@@ -11,13 +13,15 @@ import (
 func NewClient() (Client, error) {
 	ProcessManager := supervisor.NewManager()
 	conf, err := expressvpn.NewConfigFileManager()
+	FirewallManager := firewall.NewFirewallManager()
 	if err != nil {
 		return nil, fmt.Errorf("error creating config manager: %w", err)
 	}
 	return &client{
-		binary:         "openvpn",
-		processManager: ProcessManager,
-		configManager:  conf,
+		binary:          "openvpn",
+		processManager:  ProcessManager,
+		firewallManager: FirewallManager,
+		configManager:   conf,
 	}, nil
 }
 
@@ -28,14 +32,16 @@ func (vpn *client) StartVPN() error {
 	if err != nil {
 		return err
 	}
+	vpn.allowTraffic()
 	vpn.processManager.StartMonitor()
 	go vpn.EnableRotateVPN()
 	return nil
 }
 
 func (vpn *client) StopVPN() error {
+	vpn.stopTraffic()
 	if vpn.cancelRotate != nil {
-		vpn.cancelRotate() // Stop the rotation goroutine
+		vpn.cancelRotate()
 	}
 	err := vpn.processManager.StopProcess(vpn.processId)
 	if err != nil {
@@ -60,7 +66,7 @@ func (vpn *client) EnableRotateVPN() {
 	defer ticker.Stop()
 	for {
 		select {
-		case <-ctx.Done(): // Check if the context has been cancelled
+		case <-ctx.Done():
 			break
 		case <-ticker.C:
 			fmt.Println("Rotating VPN connection...")
@@ -88,11 +94,9 @@ func (vpn *client) EnableRotateVPN() {
 	}
 
 }
-
 func (vpn *client) GetActiveConfig() string {
 	return vpn.configManager.GetFileName()
 }
-
 func (vpn *client) GetConfigDir() string {
 	return vpn.configManager.GetConfigDir()
 }
@@ -100,11 +104,21 @@ func (vpn *client) GetConfigDir() string {
 func (vpn *client) GetProcessId() string {
 	return vpn.processId
 }
-
 func (vpn *client) GetStatus() (supervisor.ProcessStatus, error) {
 	return vpn.processManager.GetStatus(vpn.processId)
 }
-
 func (vpn *client) GetProcessOutput() string {
 	return vpn.processManager.GetProcessOutput(vpn.processId)
+}
+func (vpn *client) allowTraffic() {
+	if fireErr := vpn.firewallManager.AllowTraffic(); fireErr != nil {
+		log.Println("error allowing traffic:", fireErr)
+		panic(fireErr)
+	}
+}
+func (vpn *client) stopTraffic() {
+	if fireErr := vpn.firewallManager.StopTraffic(); fireErr != nil {
+		log.Println("error stopping traffic:", fireErr)
+		panic(fireErr)
+	}
 }

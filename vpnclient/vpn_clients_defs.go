@@ -2,16 +2,18 @@ package vpnclient
 
 import (
 	"context"
+	"pearson-vpn-service/firewall"
 	"pearson-vpn-service/supervisor"
 	"pearson-vpn-service/vpnclient/openvpn/expressvpn"
 )
 
 type client struct {
-	binary         string
-	configManager  expressvpn.ConfigFileManager
-	processManager supervisor.ProcessManager
-	processId      string
-	cancelRotate   context.CancelFunc
+	binary          string
+	configManager   expressvpn.ConfigFileManager
+	processManager  supervisor.ProcessManager
+	firewallManager firewall.Firewall
+	processId       string
+	cancelRotate    context.CancelFunc
 }
 
 type Client interface {
@@ -24,4 +26,7 @@ type Client interface {
 	GetProcessId() string
 	GetStatus() (supervisor.ProcessStatus, error)
 	GetProcessOutput() string
+
+	allowTraffic()
+	stopTraffic()
 }
