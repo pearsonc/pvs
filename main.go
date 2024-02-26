@@ -28,8 +28,8 @@ func main() {
 				log.Println("Process Output: ", vpnClient.GetProcessOutput())
 				log.Fatalf("VPN failed to start")
 			}
+			vpnClient.ListenForSystemCalls()
 			fmt.Printf("VPN started successfully\n")
-
 			server := web.NewServer(vpnClient)
 			server.Start(8080)
 		}

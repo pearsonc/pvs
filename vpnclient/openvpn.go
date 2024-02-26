@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
 	"pearson-vpn-service/firewall"
 	"pearson-vpn-service/supervisor"
 	"pearson-vpn-service/vpnclient/openvpn/expressvpn"
+	"syscall"
 	"time"
 )
 
@@ -120,5 +123,20 @@ func (vpn *client) stopTraffic() {
 	if fireErr := vpn.firewallManager.StopTraffic(); fireErr != nil {
 		log.Println("error stopping traffic:", fireErr)
 		panic(fireErr)
+	}
+}
+func (vpn *client) ListenForSystemCalls() {
+	_, cancel := context.WithCancel(context.Background())
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	case <-c:
+		log.Println("Received shutdown signal")
+		err := vpn.StopVPN()
+		if err != nil {
+			log.Fatalf("Failed to stop VPN: %v", err)
+		}
+		cancel()
 	}
 }

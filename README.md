@@ -7,7 +7,7 @@ You may need to first configure networking but if you have an internet connectio
 ```bash
 sudo apt clean && sudo apt update && sudo apt upgrade -y \
 && sudo apt dist-upgrade -y && sudo apt autoremove -y \
-&& sudo apt install curl vim htop net-tools wget git make openvpn iptables-persistent dnsutils iputils-ping -y
+&& sudo apt install curl vim htop net-tools wget git make openvpn resolvconf iptables-persistent dnsutils iputils-ping -y
 ```
 ### Configure Network Interfaces
 Edit the network configuration file using a text editor, the yaml filename may differ just ensure there is only one file in the directory.
@@ -99,6 +99,19 @@ sudo chown -R pvs:pvs /etc/pvs
 sudo find /etc/pvs -type d -exec chmod 750 {} \;
 sudo find /etc/pvs -type f -exec chmod 640 {} \;
 sudo chmod 750 /etc/pvs/pvs
+```
+
+### Add a txt file with the vpn password
+```bash
+sudo mkdir -p /config
+sudo touch /config/openvpn-credentials.txt
+sudo echo "vpnusername" | sudo tee /config/openvpn-credentials.txt
+sudo echo "vpnpassword" | sudo tee -a /config/openvpn-credentials.txt
+```
+
+### Remove the last commands from the bash history to prevent the password from being stored in the bash history file
+```bash
+for i in {1..4}; do history -d $(($HISTCMD-1)); done
 ```
 
 ### Add the service to systemd and start it
