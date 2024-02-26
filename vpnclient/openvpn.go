@@ -183,6 +183,8 @@ func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
 				return nil
 			} else {
 				// Debug by showing all output
+				logconfig.Log.Println(msg)
+				time.Sleep(1 * time.Second)
 				//log.Println(msg)
 				//time.Sleep(1 * time.Second)
 			}
