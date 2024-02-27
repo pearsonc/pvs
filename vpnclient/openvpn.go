@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"pearson-vpn-service/firewall"
 	"pearson-vpn-service/logconfig"
 	"pearson-vpn-service/supervisor"
@@ -17,7 +16,6 @@ import (
 type Message struct {
 	Line    string
 	Success bool
-	Type    string
 }
 
 func NewClient() (Client, error) {
@@ -160,20 +158,17 @@ func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
 				continue
 			}
 
-			var msgType string
 			if strings.Contains(line, "Initialization Sequence Completed") {
-				ch <- Message{Success: true, Type: "Info"}
+				ch <- Message{Success: true}
 				return
 			} else if strings.Contains(line, "DEPRECATED OPTION:") || strings.Contains(line, "WARNING:") {
-				msgType = "Warning"
+				ch <- Message{Line: line}
 			} else {
-				msgType = "Error" // Assuming non-warning, non-success lines are potentially errors
+				ch <- Message{Line: line}
 			}
-
-			ch <- Message{Line: line, Type: msgType}
 		}
 		if err := scanner.Err(); err != nil {
-			ch <- Message{Line: err.Error(), Type: "Error"}
+			ch <- Message{Line: err.Error()}
 		}
 		close(ch)
 	}()
@@ -183,28 +178,21 @@ func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
 
 	var failureOutput string
 
+	// Listen for messages on the channel
 	for {
 		select {
-		case msg, ok := <-ch:
-			if !ok {
-				// Channel is closed, end the loop
-				return nil
-			}
+		case msg := <-ch:
 			if msg.Success {
-				log.Println("OpenVPN connection established successfully!")
+				logconfig.Log.Println("OpenVPN connection established successfully!")
 				return nil
-			} else if msg.Type == "Error" {
-				// Only append error messages to failure output
-				failureOutput += msg.Line + "\n"
+			} else {
+				println(msg.Line)
+				//failureOutput += msg.Line + "\n"
 			}
 		case <-ctx.Done():
 			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				log.Println("Timed out waiting for OpenVPN to connect.")
-				if failureOutput != "" {
-					log.Println("Failure details:", failureOutput)
-				} else {
-					log.Println("No error details available.")
-				}
+				logconfig.Log.Println("Timed out waiting for OpenVPN to connect.")
+				logconfig.Log.Println("OpenVPN output: ", failureOutput)
 			}
 			return ctx.Err()
 		}
