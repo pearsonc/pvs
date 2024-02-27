@@ -173,7 +173,7 @@ func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
 		close(ch)
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	var failureOutput string
