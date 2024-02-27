@@ -1,0 +1,9 @@
+Package: pvs
+Version: 1.0.0-2
+Section: net
+Priority: optional
+Architecture: amd64
+Depends: openvpn, resolvconf, iptables-persistent, dnsutils, iputils-ping
+Maintainer: Chris Pearson <chris@nerdexecutive.com>
+Homepage: https://www.nerdexecutive.com
+Description: A program that manages openvpn connections to ExpressVPN
