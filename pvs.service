@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/etc/pvs/pvs
-WorkingDirectory=/etc/pvs
+ExecStart=/usr/bin/pvs/pvs
+WorkingDirectory=/usr/bin/pvs
 User=root
 Group=root
 Restart=always

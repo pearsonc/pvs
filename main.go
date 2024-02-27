@@ -35,7 +35,6 @@ func main() {
 		logconfig.Log.Fatalf("Error getting VPN status: %v", err)
 	} else if processStatus != supervisor.Running {
 		logconfig.Log.Println("VPN Status: ", processStatus.String())
-		//logconfig.Log.Println("Process Output: ", vpnClient.GetProcessOutput())
 		logconfig.Log.Fatalf("VPN failed to start")
 	}
 

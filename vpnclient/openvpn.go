@@ -173,8 +173,10 @@ func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
 		close(ch)
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
+	var failureOutput string
 
 	// Listen for messages on the channel
 	for {
@@ -184,15 +186,12 @@ func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
 				logconfig.Log.Println("OpenVPN connection established successfully!")
 				return nil
 			} else {
-				// Debug by showing all output
-				//logconfig.Log.Println(msg)
-				/*time.Sleep(1 * time.Second)*/
-				//log.Println(msg)
-				//time.Sleep(1 * time.Second)
+				failureOutput += msg.Line
 			}
 		case <-ctx.Done():
 			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 				logconfig.Log.Println("Timed out waiting for OpenVPN to connect.")
+				logconfig.Log.Println("OpenVPN output: ", failureOutput)
 			}
 			return ctx.Err()
 		}
