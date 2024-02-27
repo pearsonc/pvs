@@ -61,6 +61,9 @@ func (vpn *client) StartVPN() error {
 }
 
 func (vpn *client) StopVPN() error {
+
+	vpn.processManager.StopMonitor()
+
 	if !vpn.processManager.IsProcessRunning(vpn.processId) {
 		logconfig.Log.Println("VPN process is not running, no need to stop it.")
 		return nil
@@ -100,24 +103,22 @@ func (vpn *client) EnableRotateVPN() {
 			break
 		case <-ticker.C:
 			logconfig.Log.Println("Rotating VPN connection...")
-			err := vpn.configManager.Initialise()
-			if err != nil {
-				logconfig.Log.Println("Error rotating VPN connection: ", err)
-				fmt.Println("Error rotating VPN connection: ", err)
+			initErr := vpn.configManager.Initialise()
+			if initErr != nil {
+				logconfig.Log.Println("Error rotating VPN connection: ", initErr)
+				fmt.Println("Error rotating VPN connection: ", initErr)
 				break
 			}
-			vpn.processManager.StopMonitor()
-			err = vpn.StopVPN()
-			if err != nil {
-				logconfig.Log.Println("Error rotating VPN connection: ", err)
+			stopErr := vpn.StopVPN()
+			if stopErr != nil {
+				logconfig.Log.Println("Error stopping vpn during rotation: ", stopErr)
 				break
 			}
-			err = vpn.StartVPN()
-			if err != nil {
-				logconfig.Log.Println("Error rotating VPN connection: ", err)
+			startErr := vpn.StartVPN()
+			if startErr != nil {
+				logconfig.Log.Println("Error starting vpn during rotation: ", startErr)
 				break
 			}
-			vpn.processManager.StartMonitor()
 			logconfig.Log.Println("Rotated VPN connection successfully")
 		}
 		return
@@ -173,7 +174,7 @@ func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
 		close(ch)
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	var failureOutput string
