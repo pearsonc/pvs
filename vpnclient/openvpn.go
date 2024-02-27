@@ -186,7 +186,7 @@ func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
 				logconfig.Log.Println("OpenVPN connection established successfully!")
 				return nil
 			} else {
-				failureOutput += msg.Line + "\n"
+				failureOutput += msg.Line
 			}
 		case <-ctx.Done():
 			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
