@@ -33,6 +33,7 @@ func NewClient() (Client, error) {
 	}, nil
 }
 
+// StartVPN @TODO: Make retries and timeout configurable
 func (vpn *client) StartVPN() error {
 	connectionArgs := []string{"--config", vpn.GetConfigDir() + vpn.GetActiveConfig(), "--auth-nocache"}
 	vpn.processId = vpn.processManager.CreateProcess(vpn.binary, connectionArgs...)
@@ -46,8 +47,16 @@ func (vpn *client) StartVPN() error {
 	}
 	scanner := bufio.NewScanner(stdoutStream)
 	logconfig.Log.Println("Waiting for OpenVPN connection to be established...")
-	if waitErr := vpn.waitForConnection(scanner); waitErr != nil {
-		return waitErr
+	const maxAttempts = 3
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		if waitErr := vpn.waitForConnection(scanner); waitErr != nil {
+			if attempt == maxAttempts {
+				return waitErr
+			}
+			fmt.Printf("Error on attempt %d: %v\n", attempt, waitErr)
+			continue
+		}
+		break
 	}
 	logconfig.Log.Println("OpenVPN connection established successfully!")
 	logconfig.Log.Println("Routing all traffic through VPN...")
