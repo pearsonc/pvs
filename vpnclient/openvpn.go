@@ -54,6 +54,11 @@ func (vpn *client) StartVPN() error {
 				return waitErr
 			}
 			fmt.Printf("Error on attempt %d: %v\n", attempt, waitErr)
+			initErr := vpn.configManager.Initialise()
+			if initErr != nil {
+				logconfig.Log.Println("Error getting new config: ", initErr)
+				return initErr
+			}
 			continue
 		}
 		break
