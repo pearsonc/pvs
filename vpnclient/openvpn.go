@@ -33,8 +33,25 @@ func NewClient() (Client, error) {
 	}, nil
 }
 
-// StartVPN @TODO: Make retries and timeout configurable
 func (vpn *client) StartVPN() error {
+	if vpn.processManager.IsProcessRunning(vpn.processId) {
+		logconfig.Log.Println("VPN process is already running, no need to start it.")
+		return nil
+	}
+	logconfig.Log.Println("Starting OpenVPN...")
+	var err error
+	for i := 0; i < 3; i++ {
+		err = vpn.startOpenVPN()
+		if err == nil {
+			return nil
+		}
+		logconfig.Log.Printf("Attempt %d to start OpenVPN failed: %v\n", i+1, err)
+		time.Sleep(5 * time.Second)
+	}
+	return err
+}
+
+func (vpn *client) startOpenVPN() error {
 	connectionArgs := []string{"--config", vpn.GetConfigDir() + vpn.GetActiveConfig(), "--auth-nocache"}
 	vpn.processId = vpn.processManager.CreateProcess(vpn.binary, connectionArgs...)
 	err := vpn.processManager.StartProcess(vpn.processId)
@@ -47,22 +64,11 @@ func (vpn *client) StartVPN() error {
 	}
 	scanner := bufio.NewScanner(stdoutStream)
 	logconfig.Log.Println("Waiting for OpenVPN connection to be established...")
-	const maxAttempts = 3
-	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		if waitErr := vpn.waitForConnection(scanner); waitErr != nil {
-			if attempt == maxAttempts {
-				return waitErr
-			}
-			fmt.Printf("Error on attempt %d: %v\n", attempt, waitErr)
-			initErr := vpn.configManager.Initialise()
-			if initErr != nil {
-				logconfig.Log.Println("Error getting new config: ", initErr)
-				return initErr
-			}
-			continue
-		}
-		break
+	if waitErr := vpn.waitForConnection(scanner); waitErr != nil {
+		_ = vpn.processManager.StopProcess(vpn.processId)
+		return waitErr
 	}
+
 	logconfig.Log.Println("OpenVPN connection established successfully!")
 	logconfig.Log.Println("Routing all traffic through VPN...")
 	vpn.allowTraffic()
@@ -192,8 +198,6 @@ func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
 	defer cancel()
 
 	var failureOutput string
-
-	// Listen for messages on the channel
 	for {
 		select {
 		case msg := <-ch:
