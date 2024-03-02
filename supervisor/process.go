@@ -85,7 +85,7 @@ func (p *process) Stop() error {
 		return errors.New("process not running")
 	}
 
-	err := p.cmd.Process.Kill()
+	err := p.cmd.Process.Signal(syscall.SIGTERM)
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (p *process) Restart() error {
 		return errors.New("process not running")
 	}
 
-	err := p.cmd.Process.Kill()
+	err := p.cmd.Process.Signal(syscall.SIGTERM)
 	if err != nil {
 		return err
 	}
