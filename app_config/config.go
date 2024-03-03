@@ -14,6 +14,7 @@ func init() {
 		logconfig.Log.Fatalf("Failed to read pvs application config file: %v", err)
 	} else {
 		logconfig.Log.Println("Config object created")
+		logconfig.Log.Println(Config.AllKeys())
 	}
 
 }
