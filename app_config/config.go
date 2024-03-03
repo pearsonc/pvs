@@ -15,6 +15,7 @@ func init() {
 	} else {
 		logconfig.Log.Println("Config object created")
 		logconfig.Log.Println(Config.AllKeys())
+		logconfig.Log.Println(Config.AllSettings())
 	}
 
 }
