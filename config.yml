@@ -1,0 +1,37 @@
+monitoring:
+  process_restart_limit: 3
+
+openvpn:
+    config_dir: "/usr/bin/pvs/vpn_configs"
+    rotate_minutes: 15
+    preferred_configs:
+    - "my_expressvpn_andorra_udp.ovpn"
+    - "my_expressvpn_austria_udp.ovpn"
+    - "my_expressvpn_denmark_udp.ovpn"
+    - "my_expressvpn_finland_udp.ovpn"
+    - "my_expressvpn_france_-_alsace_udp.ovpn"
+    - "my_expressvpn_france_-_marseille_udp.ovpn"
+    - "my_expressvpn_france_-_paris_-_1_udp.ovpn"
+    - "my_expressvpn_france_-_paris_-_2_udp.ovpn"
+    - "my_expressvpn_france_-_strasbourg_udp.ovpn"
+    - "my_expressvpn_germany_-_frankfurt_-_1_udp.ovpn"
+    - "my_expressvpn_germany_-_frankfurt_-_3_udp.ovpn"
+    - "my_expressvpn_germany_-_nuremberg_udp.ovpn"
+    - "my_expressvpn_iceland_udp.ovpn"
+    - "my_expressvpn_ireland_udp.ovpn"
+    - "my_expressvpn_italy_-_cosenza_udp.ovpn"
+    - "my_expressvpn_italy_-_milan_udp.ovpn"
+    - "my_expressvpn_luxembourg_udp.ovpn"
+    - "my_expressvpn_monaco_udp.ovpn"
+    - "my_expressvpn_netherlands_-_amsterdam_udp.ovpn"
+    - "my_expressvpn_netherlands_-_rotterdam_udp.ovpn"
+    - "my_expressvpn_netherlands_-_the_hague_udp.ovpn"
+    - "my_expressvpn_norway_udp.ovpn"
+    - "my_expressvpn_portugal_udp.ovpn"
+    - "my_expressvpn_spain_-_barcelona_-_2_udp.ovpn"
+    - "my_expressvpn_spain_-_barcelona_udp.ovpn"
+    - "my_expressvpn_spain_-_madrid_udp.ovpn"
+    - "my_expressvpn_sweden_-_2_udp.ovpn"
+    - "my_expressvpn_sweden_udp.ovpn"
+    - "my_expressvpn_switzerland_-_2_udp.ovpn"
+    - "my_expressvpn_switzerland_udp.ovpn"

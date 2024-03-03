@@ -6,26 +6,34 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"pearson-vpn-service/app_config"
 	"pearson-vpn-service/logconfig"
 	"strings"
 	"time"
 )
 
-// NewConfigFileManager @TODO: Implement config file to make dir and preferredConfigs configurable
 func NewConfigFileManager() (ConfigFileManager, error) {
-	ConfigFile := &configFileManager{
-		dir:              "vpn_configs/",
-		preferredConfigs: os.Getenv("VPN_CONFIGS"),
-	}
 
+	customDir := app_config.Config.GetString("openvpn.config_dir")
+	dir := ""
+	if customDir != "" {
+		dir = customDir
+	} else {
+		dir = "vpn_configs/"
+	}
+	if !strings.HasSuffix(dir, "/") {
+		dir += "/"
+	}
+	ConfigFile := &configFileManager{
+		dir:              dir,
+		preferredConfigs: app_config.Config.GetStringSlice("openvpn.preferred_configs"),
+	}
 	if err := ConfigFile.Initialise(); err != nil {
 		return nil, err
 	}
 	return ConfigFile, nil
 }
 
-// Initialise @TODO: Implement logging mechanism, at present logging output can be captured using journal.
-// Initialise @NOTE: sudo journalctl -u pvs.service -f
 func (config *configFileManager) Initialise() error {
 	file, err := config.getRandomConfigFile()
 	if err != nil {
@@ -45,9 +53,10 @@ func (config *configFileManager) getRandomConfigFile() (string, error) {
 	r := rand.New(source)
 
 	if len(config.preferredConfigs) > 0 {
-		configList := strings.Split(config.preferredConfigs, ",")
-		randomConfig := strings.TrimSpace(configList[r.Intn(len(configList))])
-		fileName := randomConfig
+		selectedConfig := config.preferredConfigs[rand.Intn(len(config.preferredConfigs))]
+
+		fmt.Printf("Selected Config: %s\n", selectedConfig)
+		fileName := selectedConfig
 
 		logconfig.Log.Println("Preferred config files found, selected at random:", fileName)
 		if _, err := os.Stat(config.dir + fileName); err == nil {

@@ -2,18 +2,18 @@ package supervisor
 
 import (
 	"fmt"
+	"pearson-vpn-service/app_config"
 	"pearson-vpn-service/logconfig"
 	"time"
 )
 
-// NewProcessMonitorInstance @TODO: make interval and retry configurable via environment variables or a config file
 func NewProcessMonitorInstance(processManager ProcessManager) ProcessMonitor {
 	once.Do(func() {
 		instance = &processMonitor{
 			processManager: processManager,
 			checkInterval:  2,
 			stopChan:       make(chan struct{}),
-			retry:          3,
+			retry:          app_config.Config.GetInt("monitoring.process_restart_limit"),
 			retryCounts:    make(map[string]int),
 		}
 	})
