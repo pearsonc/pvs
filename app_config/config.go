@@ -13,5 +13,4 @@ func init() {
 	if err := Config.ReadInConfig(); err != nil {
 		logconfig.Log.Fatalf("Failed to read pvs application config file: %v", err)
 	}
-
 }

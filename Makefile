@@ -1,4 +1,4 @@
-VERSION := 1.0.9-1
+VERSION := 1.1.0-1
 PACKAGE_NAME := pvs
 DEBIAN_PACKAGE_DIR := bin/$(PACKAGE_NAME)_$(VERSION)_amd64
 DEBIAN_CONTROL_FILE_SRC := package_metadata/control
@@ -17,6 +17,7 @@ build: setup_build_environment copy_control_file build_package
 setup_build_environment:
 	@mkdir -p $(DEBIAN_PACKAGE_DIR)/DEBIAN
 	@mkdir -p $(BUILD_DIR)
+	@cp -r config.yml $(BUILD_DIR)
 	@mkdir -p $(CONFIG_DIR)
 	@mkdir -p $(SYSTEMD_DIR)
 	@mkdir -p $(LOG_DIR)
