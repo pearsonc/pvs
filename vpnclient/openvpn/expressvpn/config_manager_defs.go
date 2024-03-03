@@ -2,7 +2,7 @@ package expressvpn
 
 type configFileManager struct {
 	dir              string
-	preferredConfigs map[string]interface{}
+	preferredConfigs []string
 	fileName         string
 }
 
