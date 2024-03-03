@@ -12,6 +12,8 @@ func init() {
 	Config.SetConfigFile("config.yml")
 	if err := Config.ReadInConfig(); err != nil {
 		logconfig.Log.Fatalf("Failed to read pvs application config file: %v", err)
+	} else {
+		logconfig.Log.Println("Config object created")
 	}
 
 }
