@@ -29,6 +29,8 @@ func NewConfigFileManager() (ConfigFileManager, error) {
 		preferredConfigs: app_config.Config.GetString("openvpn.preferred_configs"),
 	}
 
+	logconfig.Log.Println("preferredConfigs:", ConfigFile.preferredConfigs)
+
 	if err := ConfigFile.Initialise(); err != nil {
 		return nil, err
 	}
