@@ -26,11 +26,8 @@ func NewConfigFileManager() (ConfigFileManager, error) {
 	}
 	ConfigFile := &configFileManager{
 		dir:              dir,
-		preferredConfigs: app_config.Config.GetString("openvpn.preferred_configs"),
+		preferredConfigs: app_config.Config.GetStringMap("openvpn.preferred_configs"),
 	}
-
-	logconfig.Log.Println("preferredConfigs:", ConfigFile.preferredConfigs)
-
 	if err := ConfigFile.Initialise(); err != nil {
 		return nil, err
 	}
@@ -56,8 +53,14 @@ func (config *configFileManager) getRandomConfigFile() (string, error) {
 	r := rand.New(source)
 
 	if len(config.preferredConfigs) > 0 {
-		configList := strings.Split(config.preferredConfigs, ",")
-		randomConfig := strings.TrimSpace(configList[r.Intn(len(configList))])
+		var configKeys []string
+		for key := range config.preferredConfigs {
+			configKeys = append(configKeys, key)
+		}
+
+		// Select a random configuration file
+		randomIndex := r.Intn(len(configKeys))
+		randomConfig := strings.TrimSpace(configKeys[randomIndex])
 		fileName := randomConfig
 
 		logconfig.Log.Println("Preferred config files found, selected at random:", fileName)
