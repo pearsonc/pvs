@@ -150,10 +150,14 @@ func (config *configFileManager) setupCiphersAndCerts() error {
 	text = strings.ReplaceAll(text, "keysize 256", "")
 	text = strings.ReplaceAll(text, "ns-cert-type server", "remote-cert-tls server")
 
-	// Remove any existing fallback cipher configuration, as BF-CBC is not supported
+	// Remove any existing fallback cipher configuration, as BF-CBC is not supported and replace with AES-256-GCM
 	text = strings.ReplaceAll(text, "\ndata-ciphers-fallback BF-CBC", "")
-	// Set a secure cipher as fallback
-	text += "\ndata-ciphers-fallback AES-256-GCM"
+	if !strings.Contains(text, "\ndata-ciphers-fallback AES-256-GCM") {
+		text += "\ndata-ciphers-fallback AES-256-GCM"
+	} else {
+		text = strings.ReplaceAll(text, "\ndata-ciphers-fallback AES-256-GCM", "")
+		text += "\ndata-ciphers-fallback AES-256-GCM"
+	}
 
 	modifiedContent := []byte(text)
 	err = os.WriteFile(filePath, modifiedContent, 0644)
