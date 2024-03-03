@@ -108,7 +108,6 @@ func (vpn *client) StopVPN() error {
 	return nil
 }
 
-// RestartVPN @TODO: Make add checks for VPN connection status
 func (vpn *client) RestartVPN() error {
 	err := vpn.processManager.RestartProcess(vpn.processId)
 	if err != nil {

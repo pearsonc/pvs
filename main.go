@@ -9,10 +9,8 @@ import (
 	"pearson-vpn-service/supervisor"
 	"pearson-vpn-service/vpnclient"
 	"syscall"
-	"time"
 )
 
-// main @TODO: change sleep time to a more reliable method check output of process for success
 func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -23,13 +21,9 @@ func main() {
 	if err != nil {
 		logconfig.Log.Fatalf("Error creating VPN client: %v", err)
 	}
-
 	if err := vpnClient.StartVPN(); err != nil {
 		logconfig.Log.Fatalf("Error starting VPN: %v", err)
 	}
-
-	time.Sleep(5 * time.Second)
-
 	processStatus, err := vpnClient.GetStatus()
 	if err != nil {
 		logconfig.Log.Fatalf("Error getting VPN status: %v", err)

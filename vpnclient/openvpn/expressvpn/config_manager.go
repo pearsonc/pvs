@@ -6,16 +6,27 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"pearson-vpn-service/app_config"
 	"pearson-vpn-service/logconfig"
 	"strings"
 	"time"
 )
 
-// NewConfigFileManager @TODO: Implement config file to make dir and preferredConfigs configurable
 func NewConfigFileManager() (ConfigFileManager, error) {
+
+	customDir := app_config.Config.GetString("openvpn.config_dir")
+	dir := ""
+	if customDir != "" {
+		dir = customDir
+	} else {
+		dir = "vpn_configs/"
+	}
+	if !strings.HasSuffix(dir, "/") {
+		dir += "/"
+	}
 	ConfigFile := &configFileManager{
-		dir:              "vpn_configs/",
-		preferredConfigs: os.Getenv("VPN_CONFIGS"),
+		dir:              dir,
+		preferredConfigs: app_config.Config.GetString("openvpn.preferred_configs"),
 	}
 
 	if err := ConfigFile.Initialise(); err != nil {
@@ -24,8 +35,6 @@ func NewConfigFileManager() (ConfigFileManager, error) {
 	return ConfigFile, nil
 }
 
-// Initialise @TODO: Implement logging mechanism, at present logging output can be captured using journal.
-// Initialise @NOTE: sudo journalctl -u pvs.service -f
 func (config *configFileManager) Initialise() error {
 	file, err := config.getRandomConfigFile()
 	if err != nil {
