@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"pearson-vpn-service/app_config"
 	"pearson-vpn-service/firewall"
 	"pearson-vpn-service/logconfig"
 	"pearson-vpn-service/supervisor"
@@ -118,6 +119,10 @@ func (vpn *client) RestartVPN() error {
 func (vpn *client) EnableRotateVPN() {
 	ctx, cancel := context.WithCancel(context.Background())
 	vpn.cancelRotate = cancel
+	rotatePeriod := app_config.Config.GetInt("openvpn.rotate_minutes")
+	if rotatePeriod <= 0 {
+		rotatePeriod = 15
+	}
 	ticker := time.NewTicker(15 * time.Minute)
 	defer ticker.Stop()
 	for {
