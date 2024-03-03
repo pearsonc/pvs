@@ -17,6 +17,7 @@ build: setup_build_environment copy_control_file build_package
 setup_build_environment:
 	@mkdir -p $(DEBIAN_PACKAGE_DIR)/DEBIAN
 	@mkdir -p $(BUILD_DIR)
+	@cp -r config.yml $(BUILD_DIR)
 	@mkdir -p $(CONFIG_DIR)
 	@mkdir -p $(SYSTEMD_DIR)
 	@mkdir -p $(LOG_DIR)
