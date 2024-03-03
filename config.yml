@@ -3,7 +3,7 @@ monitoring:
 
 openvpn:
     config_dir: "/usr/bin/pvs/vpn_configs"
-    rotate_minutes: 15
+    rotate_minutes: 1
 
 preferred_configs:
   - "my_expressvpn_andorra_udp.ovpn"
