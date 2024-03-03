@@ -2,7 +2,7 @@ monitoring:
   process_restart_limit: 3
 
 openvpn:
-    config_dir: "/var/bin/pvs/vpn_configs"
+    config_dir: "/usr/bin/pvs/vpn_configs"
     rotate_minutes: 15
 
 preferred_configs:
