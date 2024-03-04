@@ -104,4 +104,8 @@ sudo systemctl enable pvs.service
 sudo systemctl start pvs.service
 ```
 
-### A log file can be found at /var/log/pvs.log
+### A log file can be found at
+
+```bash
+tail -f /var/log/pvs.log
+```
