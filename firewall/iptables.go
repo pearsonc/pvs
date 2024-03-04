@@ -7,7 +7,6 @@ import (
 	"pearson-vpn-service/app_config"
 )
 
-// NewFirewallManager @TODO add private network to config file
 func NewFirewallManager() Firewall {
 
 	adp := app_config.Config.GetString("firewall.adpName")
