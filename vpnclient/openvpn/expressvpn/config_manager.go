@@ -54,11 +54,9 @@ func (config *configFileManager) getRandomConfigFile() (string, error) {
 
 	if len(config.preferredConfigs) > 0 {
 		selectedConfig := config.preferredConfigs[rand.Intn(len(config.preferredConfigs))]
-
-		fmt.Printf("Selected Config: %s\n", selectedConfig)
 		fileName := selectedConfig
 
-		logconfig.Log.Println("Preferred config files found, selected at random:", fileName)
+		logconfig.Log.Info("Preferred config files found, selected at random:", fileName)
 		if _, err := os.Stat(config.dir + fileName); err == nil {
 			return fileName, nil
 		} else {
@@ -86,7 +84,7 @@ func (config *configFileManager) getRandomConfigFile() (string, error) {
 		}
 
 		randomFile := files[r.Intn(len(files))]
-		logconfig.Log.Println("No preferred config files found, selected a random file from config dir:", randomFile)
+		logconfig.Log.Info("No preferred config files found, selected a random file from config dir:", randomFile)
 		return randomFile, nil
 	}
 }

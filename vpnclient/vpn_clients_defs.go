@@ -20,7 +20,7 @@ type Client interface {
 	StartVPN() error
 	StopVPN() error
 	RestartVPN() error
-	EnableRotateVPN()
+	EnableAutoRotateVPN()
 	GetActiveConfig() string
 	GetConfigDir() string
 	GetProcessId() string
