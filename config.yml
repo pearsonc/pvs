@@ -1,3 +1,9 @@
+firewall:
+  enabled: true
+# If you only have one interface then the firewall will not block network traffic when the vpn rotates or disconnects
+  private_network: "192.168.1.0/24"
+  private_network_adaptor: "eth1"
+
 monitoring:
   process_restart_limit: 3
 

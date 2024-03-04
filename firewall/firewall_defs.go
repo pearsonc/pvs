@@ -1,6 +1,7 @@
 package firewall
 
 type firewall struct {
+	enabled        bool
 	adpName        string
 	privateNetwork string
 }

@@ -4,15 +4,31 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"pearson-vpn-service/app_config"
 )
 
+// NewFirewallManager @TODO add private network to config file
 func NewFirewallManager() Firewall {
+
+	adp := app_config.Config.GetString("firewall.adpName")
+	privateNetwork := app_config.Config.GetString("firewall.privateNetwork")
+	enabled := app_config.Config.GetBool("firewall.enabled")
+	if adp == "" {
+		adp = "eth1"
+	}
+	if privateNetwork == "" {
+		privateNetwork = "192.168.1.0/24"
+	}
 	return &firewall{
-		adpName:        "eth1",
-		privateNetwork: "192.168.1.0/24",
+		enabled:        enabled,
+		adpName:        adp,
+		privateNetwork: privateNetwork,
 	}
 }
 func (f *firewall) AllowTraffic() error {
+	if !f.enabled {
+		return nil
+	}
 	if err := f.clearFirewall(); err != nil {
 		return err
 	}
@@ -27,6 +43,9 @@ func (f *firewall) AllowTraffic() error {
 	return nil
 }
 func (f *firewall) StopTraffic() error {
+	if !f.enabled {
+		return nil
+	}
 	if err := f.clearFirewall(); err != nil {
 		return fmt.Errorf("could not clear firewall: %w", err)
 	}
@@ -48,6 +67,9 @@ func (f *firewall) StopTraffic() error {
 	return nil
 }
 func (f *firewall) clearFirewall() error {
+	if !f.enabled {
+		return nil
+	}
 	if cmdErr := f.executeCommands([]struct {
 		args []string
 		desc string
