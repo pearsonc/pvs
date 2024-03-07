@@ -38,14 +38,14 @@ func (pm *processMonitor) StartMonitoring() {
 						if pm.retryCounts[id] < pm.retry {
 							err := p.reinitialise()
 							if err != nil {
-								logconfig.Log.Printf("Error restarting process %s: %v\n", p.GetProcessID(), err)
-								logconfig.Log.Printf("Retry attempt %d for process %s\n", pm.retryCounts[id], p.GetProcessID())
+								logconfig.Log.Errorf("Error restarting process %s: %v\n", p.GetProcessID(), err)
+								logconfig.Log.Errorf("Retry attempt %d for process %s\n", pm.retryCounts[id], p.GetProcessID())
 								pm.retryCounts[id]++
 							} else {
 								pm.retryCounts[id] = 0
 							}
 						} else {
-							fmt.Printf("Maximum restart attempts reached for process %s\n", p.GetProcessID())
+							fmt.Errorf("Maximum restart attempts reached for process %s\n", p.GetProcessID())
 						}
 					}
 				}

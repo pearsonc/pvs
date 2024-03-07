@@ -14,13 +14,14 @@ type client struct {
 	firewallManager firewall.Firewall
 	processId       string
 	cancelRotate    context.CancelFunc
+	dnsCheckCancel  context.CancelFunc
 }
 
 type Client interface {
 	StartVPN() error
 	StopVPN() error
 	RestartVPN() error
-	EnableRotateVPN()
+	EnableAutoRotateVPN()
 	GetActiveConfig() string
 	GetConfigDir() string
 	GetProcessId() string

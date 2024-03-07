@@ -2,13 +2,12 @@ package firewall
 
 import (
 	"fmt"
-	"log"
 	"os/exec"
 	"pearson-vpn-service/app_config"
+	"pearson-vpn-service/logconfig"
 )
 
 func NewFirewallManager() Firewall {
-
 	adp := app_config.Config.GetString("firewall.adpName")
 	privateNetwork := app_config.Config.GetString("firewall.privateNetwork")
 	enabled := app_config.Config.GetBool("firewall.enabled")
@@ -28,6 +27,7 @@ func (f *firewall) AllowTraffic() error {
 	if !f.enabled {
 		return nil
 	}
+	logconfig.Log.Info("Allowing traffic")
 	if err := f.clearFirewall(); err != nil {
 		return err
 	}
@@ -45,6 +45,7 @@ func (f *firewall) StopTraffic() error {
 	if !f.enabled {
 		return nil
 	}
+	logconfig.Log.Info("Stopping traffic")
 	if err := f.clearFirewall(); err != nil {
 		return fmt.Errorf("could not clear firewall: %w", err)
 	}
@@ -90,11 +91,7 @@ func (f *firewall) executeCommands(iptablesCommands []struct {
 		cmd := exec.Command("iptables", command.args...)
 		output, err := cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("Error running iptables command to %s: %v, Output: %s", command.desc, err, output)
-			return fmt.Errorf("could not %s: %w", command.desc, err)
-		} else {
-			// Uncomment for debugging
-			//log.Printf("Successfully ran iptables command to %s, Output: %s", command.desc, output)
+			return fmt.Errorf("could not %s: %w %s", command.desc, err, output)
 		}
 	}
 	return nil

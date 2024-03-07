@@ -2,10 +2,10 @@ package supervisor
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"pearson-vpn-service/logconfig"
 	"syscall"
 	"time"
 )
@@ -29,17 +29,16 @@ func NewProcess(name string, args ...string) Process {
 func (p *process) reinitialise() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	fmt.Printf("Reinitialising process %s\n", p.id)
+	logconfig.Log.Infof("Reinitialising process %s\n", p.id)
 	if p.cmd.Process != nil {
 		if err := p.cmd.Process.Signal(syscall.Signal(0)); err != nil {
 			if errors.Is(err, os.ErrProcessDone) {
-				fmt.Printf("Process %s has finished.\n", p.id)
+				logconfig.Log.Infof("Process %s has finished.\n", p.id)
 			} else {
-				fmt.Printf("Error signaling process %s (it might be dead): %v\n", p.id, err)
+				logconfig.Log.Warnf("Error signaling process %s (it might be dead): %v\n", p.id, err)
 			}
 		} else {
 			if err1 := p.cmd.Process.Kill(); err != nil {
-				fmt.Printf("Error killing process %s: %v\n", p.id, err)
 				return err1
 			}
 		}
@@ -53,10 +52,8 @@ func (p *process) reinitialise() error {
 	err := p.Start()
 	p.mutex.Lock()
 	if err != nil {
-		fmt.Printf("Error restarting process %s: %v\n", p.id, err)
 		return err
 	}
-
 	return nil
 }
 func (p *process) Start() error {
