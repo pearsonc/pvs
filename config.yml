@@ -19,6 +19,11 @@ monitoring:
 openvpn:
     config_dir: "/usr/bin/pvs/vpn_configs"
     rotate_minutes: 15
+    # PVS will monitor the VPN Process to ensure it is always running however,
+    # OpenVPN connections can sometimes stall while remaining active for this reason we have introduced a network check
+    # in the form of a dns check, this is the interval in minutes that the dns check will be performed
+    # if the dns check fails the VPN will be restarted, this value should be less than the rotate_minutes value
+    dns_check_minutes: 1
     preferred_configs:
     - "my_expressvpn_andorra_udp.ovpn"
     - "my_expressvpn_austria_udp.ovpn"

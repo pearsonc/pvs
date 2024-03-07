@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"pearson-vpn-service/app_config"
 	"pearson-vpn-service/firewall"
 	"pearson-vpn-service/logconfig"
@@ -71,10 +72,12 @@ func (vpn *client) startOpenVPN() error {
 		return waitErr
 	}
 	vpn.allowTraffic()
-
 	logconfig.Log.Println("Enabling VPN process monitor...")
 	vpn.processManager.StartMonitor()
 	go vpn.EnableAutoRotateVPN()
+	ctx, cancel := context.WithCancel(context.Background())
+	vpn.dnsCheckCancel = cancel
+	go vpn.StartDNSCheck(ctx)
 
 	return nil
 }
@@ -95,6 +98,13 @@ func (vpn *client) StopVPN() error {
 		logconfig.Log.Println("Cancelling VPN rotation")
 		vpn.cancelRotate()
 	}
+
+	if vpn.dnsCheckCancel != nil {
+		vpn.dnsCheckCancel()
+		vpn.dnsCheckCancel = nil
+		logconfig.Log.Println("Stopping DNS resolution checks...")
+	}
+
 	logconfig.Log.Println("VPN stopped successfully")
 	return nil
 }
@@ -215,6 +225,40 @@ func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
 				logconfig.Log.Error("OpenVPN output: ", failureOutput)
 			}
 			return ctx.Err()
+		}
+	}
+}
+
+func checkDNSResolution(domain string) error {
+	_, err := net.LookupHost(domain)
+	return err
+}
+func (vpn *client) StartDNSCheck(ctx context.Context) {
+
+	checkPeriod := app_config.Config.GetInt64("openvpn.dns_check_minutes")
+
+	if checkPeriod <= 0 {
+		checkPeriod = 1
+	}
+	logconfig.Log.Info("Enabling dns resolution checks every: ", checkPeriod, " minute(s)")
+	ticker := time.NewTicker(time.Duration(checkPeriod) * time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			logconfig.Log.Info("Stopping DNS resolution check...")
+			return
+		case <-ticker.C:
+			if err := checkDNSResolution("www.google.com"); err != nil {
+				logconfig.Log.Warn("DNS resolution failed: ", err)
+				err := vpn.RotateVPN()
+				if err != nil {
+					logconfig.Log.Errorf("Error rotating VPN connection: %v\n", err)
+					return
+				}
+			} else {
+				logconfig.Log.Info("DNS resolution check succeeded")
+			}
 		}
 	}
 }

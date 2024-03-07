@@ -16,7 +16,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-	logconfig.Log.Info("Starting VPN Service...")
+	logconfig.Log.Info("Starting PVS Service...")
 	vpnClient, err := vpnclient.NewClient()
 	if err != nil {
 		logconfig.Log.Fatalf("Error creating VPN client: %v", err)
@@ -32,7 +32,7 @@ func main() {
 		logconfig.Log.Fatalf("VPN failed to start")
 	}
 
-	logconfig.Log.Println("VPN started successfully")
+	logconfig.Log.Println("PVS started successfully")
 	server := web.NewServer(vpnClient)
 	go server.Start(ctx)
 

@@ -14,6 +14,7 @@ type client struct {
 	firewallManager firewall.Firewall
 	processId       string
 	cancelRotate    context.CancelFunc
+	dnsCheckCancel  context.CancelFunc
 }
 
 type Client interface {
