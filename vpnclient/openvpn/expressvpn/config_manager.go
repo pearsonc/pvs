@@ -96,6 +96,9 @@ func (config *configFileManager) validateConfigFile() error {
 	if err := config.setupCiphersAndCerts(); err != nil {
 		return err
 	}
+	if err := config.setupAuthUserPath(); err != nil {
+		return err
+	}
 	if err := config.setupDefaultGateway(); err != nil {
 		return err
 	}
@@ -173,6 +176,32 @@ func (config *configFileManager) setupCiphersAndCerts() error {
 	}
 	return nil
 }
+
+func (config *configFileManager) setupAuthUserPath() error {
+
+	filePath := config.dir + config.fileName
+
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+	lines := strings.Split(string(content), "\n")
+	desiredLine := "auth-user-pass /config/openvpn-credentials.txt"
+	found := false
+	for i, line := range lines {
+		if strings.HasPrefix(line, "auth-user-pass") {
+			lines[i] = desiredLine // Replace existing line
+			found = true
+			break
+		}
+	}
+	if !found {
+		lines = append(lines, desiredLine)
+	}
+	updatedContent := strings.Join(lines, "\n")
+	return os.WriteFile(filePath, []byte(updatedContent), 0644)
+}
+
 func (config *configFileManager) setupDefaultGateway() error {
 	// Remove any existing redirect-gateway directives
 	sedCmd := exec.Command("sed", "-i", "/redirect-gateway/d", config.dir+config.fileName)
