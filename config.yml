@@ -30,8 +30,6 @@ openvpn:
     - "my_expressvpn_finland_udp.ovpn"
     - "my_expressvpn_france_-_alsace_udp.ovpn"
     - "my_expressvpn_france_-_marseille_udp.ovpn"
-    - "my_expressvpn_france_-_paris_-_2_udp.ovpn"
-    - "my_expressvpn_france_-_strasbourg_udp.ovpn"
     - "my_expressvpn_germany_-_frankfurt_-_1_udp.ovpn"
     - "my_expressvpn_germany_-_frankfurt_-_3_udp.ovpn"
     - "my_expressvpn_germany_-_nuremberg_udp.ovpn"
@@ -43,14 +41,11 @@ openvpn:
     - "my_expressvpn_netherlands_-_the_hague_udp.ovpn"
     - "my_expressvpn_norway_udp.ovpn"
     - "my_expressvpn_portugal_udp.ovpn"
-    - "my_expressvpn_spain_-_barcelona_-_2_udp.ovpn"
-    - "my_expressvpn_spain_-_barcelona_udp.ovpn"
     - "my_expressvpn_spain_-_madrid_udp.ovpn"
     - "my_expressvpn_sweden_-_2_udp.ovpn"
     - "my_expressvpn_sweden_udp.ovpn"
     - "my_expressvpn_switzerland_-_2_udp.ovpn"
     - "my_expressvpn_switzerland_udp.ovpn"
-    -
 
     # The following command will return a list of host addresses that have failed to resolve, this can happen when the VPN provider no longer supports that URL and the config file is out of date.
     # You should run this if you experience issues with the VPN not connecting and then remove the offending config files from the preferred_configs list.
