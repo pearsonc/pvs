@@ -9,7 +9,10 @@ logging:
 
 firewall:
   enabled: true
-# If you only have one interface then the firewall will not block network traffic when the vpn rotates or disconnects
+  # WARNING: You could potentially lock yourself out of your server!!
+  # If you only have one interface then disable the firewall options and control it manually, the firewall manager
+  # blocks all traffic on the interface except for dns lookups when the vpn is stopped or drops out.
+  # This is to prevent all traffic from gaining access to the internet without using the vpn.
   private_network: "192.168.1.0/24"
   private_network_adaptor: "eth1"
 
@@ -25,68 +28,40 @@ openvpn:
     # if the dns check fails the VPN will be restarted, this value should be less than the rotate_minutes value
     dns_check_minutes: 1
     preferred_configs:
-      - "my_expressvpn_albania_udp.ovpn"
       - "my_expressvpn_andorra_udp.ovpn"
       - "my_expressvpn_armenia_udp.ovpn"
       - "my_expressvpn_austria_udp.ovpn"
       - "my_expressvpn_belgium_udp.ovpn"
-      - "my_expressvpn_bosnia_and_herzegovina_udp.ovpn"
-      - "my_expressvpn_bulgaria_udp.ovpn"
-      - "my_expressvpn_croatia_udp.ovpn"
       - "my_expressvpn_cyprus_udp.ovpn"
       - "my_expressvpn_czech_republic_udp.ovpn"
       - "my_expressvpn_denmark_udp.ovpn"
-      - "my_expressvpn_estonia_udp.ovpn"
       - "my_expressvpn_finland_udp.ovpn"
       - "my_expressvpn_france_-_marseille_udp.ovpn"
-      - "my_expressvpn_france_-_paris_-_1_udp.ovpn"
-      - "my_expressvpn_france_-_paris_-_2_udp.ovpn"
       - "my_expressvpn_france_-_strasbourg_udp.ovpn"
-      - "my_expressvpn_georgia_udp.ovpn"
       - "my_expressvpn_germany_-_frankfurt_-_1_udp.ovpn"
       - "my_expressvpn_germany_-_frankfurt_-_3_udp.ovpn"
       - "my_expressvpn_germany_-_nuremberg_udp.ovpn"
-      - "my_expressvpn_greece_udp.ovpn"
-      - "my_expressvpn_hungary_udp.ovpn"
-      - "my_expressvpn_iceland_udp.ovpn"
       - "my_expressvpn_ireland_udp.ovpn"
       - "my_expressvpn_isle_of_man_udp.ovpn"
       - "my_expressvpn_italy_-_cosenza_udp.ovpn"
       - "my_expressvpn_italy_-_milan_udp.ovpn"
       - "my_expressvpn_italy_-_naples_udp.ovpn"
       - "my_expressvpn_jersey_udp.ovpn"
-      - "my_expressvpn_latvia_udp.ovpn"
-      - "my_expressvpn_liechtenstein_udp.ovpn"
-      - "my_expressvpn_lithuania_udp.ovpn"
       - "my_expressvpn_luxembourg_udp.ovpn"
       - "my_expressvpn_malta_udp.ovpn"
-      - "my_expressvpn_moldova_udp.ovpn"
       - "my_expressvpn_monaco_udp.ovpn"
-      - "my_expressvpn_montenegro_udp.ovpn"
       - "my_expressvpn_netherlands_-_amsterdam_udp.ovpn"
       - "my_expressvpn_netherlands_-_rotterdam_udp.ovpn"
       - "my_expressvpn_netherlands_-_the_hague_udp.ovpn"
-      - "my_expressvpn_north_macedonia_udp.ovpn"
       - "my_expressvpn_norway_udp.ovpn"
       - "my_expressvpn_poland_udp.ovpn"
       - "my_expressvpn_portugal_udp.ovpn"
-      - "my_expressvpn_romania_udp.ovpn"
-      - "my_expressvpn_serbia_udp.ovpn"
-      - "my_expressvpn_slovakia_udp.ovpn"
       - "my_expressvpn_slovenia_udp.ovpn"
-      - "my_expressvpn_spain_-_barcelona_-_2_udp.ovpn"
-      - "my_expressvpn_spain_-_barcelona_udp.ovpn"
       - "my_expressvpn_spain_-_madrid_udp.ovpn"
       - "my_expressvpn_sweden_-_2_udp.ovpn"
       - "my_expressvpn_sweden_udp.ovpn"
       - "my_expressvpn_switzerland_-_2_udp.ovpn"
       - "my_expressvpn_switzerland_udp.ovpn"
-      - "my_expressvpn_turkey_udp.ovpn"
-      - "my_expressvpn_uk_-_docklands_udp.ovpn"
-      - "my_expressvpn_uk_-_east_london_udp.ovpn"
-      - "my_expressvpn_uk_-_london_udp.ovpn"
-      - "my_expressvpn_uk_-_midlands_udp.ovpn"
-      - "my_expressvpn_uk_-_wembley_udp.ovpn"
 
 
     # The following command will return a list of host addresses that have failed to resolve, this can happen when the VPN provider no longer supports that URL and the config file is out of date.
