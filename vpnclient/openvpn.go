@@ -41,10 +41,10 @@ func (vpn *client) StartVPN() error {
 	}
 	logconfig.Log.Println("Starting OpenVPN...")
 	var err error
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 5; i++ {
 		err = vpn.startOpenVPN()
 		if err == nil {
-			return nil
+			return err
 		}
 		logconfig.Log.Printf("Attempt %d to start OpenVPN failed: %v\n", i+1, err)
 		initErr := vpn.configManager.Initialise()
