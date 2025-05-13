@@ -13,8 +13,8 @@ firewall:
   # If you only have one interface then disable the firewall options and control it manually, the firewall manager
   # blocks all traffic on the interface except for dns lookups when the vpn is stopped or drops out.
   # This is to prevent all traffic from gaining access to the internet without using the vpn.
-  private_network: "192.168.1.0/24"
-  private_network_adaptor: "eth1"
+  privateNetworkSubnet: "192.168.1.0/24"
+  privateNetworkInterface: "eth1"
 
 monitoring:
   process_restart_limit: 3

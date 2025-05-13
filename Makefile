@@ -1,4 +1,4 @@
-VERSION := 1.5.0-2
+VERSION := 1.5.0-3
 PACKAGE_NAME := pvs
 DEBIAN_PACKAGE_DIR := bin/$(PACKAGE_NAME)_$(VERSION)_amd64
 DEBIAN_CONTROL_FILE_SRC := package_metadata/control
