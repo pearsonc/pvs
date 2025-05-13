@@ -8,8 +8,8 @@ import (
 )
 
 func NewFirewallManager() Firewall {
-	adp := app_config.Config.GetString("firewall.adpName")
-	privateNetwork := app_config.Config.GetString("firewall.privateNetwork")
+	adp := app_config.Config.GetString("firewall.privateNetworkInterface")
+	privateNetwork := app_config.Config.GetString("firewall.privateNetworkSubnet")
 	enabled := app_config.Config.GetBool("firewall.enabled")
 	if adp == "" {
 		adp = "eth1"

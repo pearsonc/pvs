@@ -47,6 +47,3 @@ func main() {
 		cancel()
 	}
 }
-
-
-
