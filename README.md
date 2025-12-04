@@ -25,6 +25,7 @@ sudo apt-get install -f ./pvs_1.6.0_amd64.deb
 ```
 
 **2. Add VPN Credentials Securely**
+
 PVS uses a separate credentials file for OpenVPN login. This file must be created and protected with strict permissions.
 ```bash
 # 1. Create the credentials directory
