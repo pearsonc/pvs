@@ -20,35 +20,42 @@ monitoring:
   process_restart_limit: 3
 
 openvpn:
-    config_dir: "/usr/bin/pvs/vpn_configs"
+    output: true # true or false, if true the openvpn output will be logged to the pvs log file
+    #config_dir: "/usr/bin/pvs/vpn_configs"
+    config_dir: "/usr/bin/pvs/protonvpn/vpn_configs"
     rotate_minutes: 15
     # PVS will monitor the VPN Process to ensure it is always running however,
     # OpenVPN connections can sometimes stall while remaining active for this reason we have introduced a network check
     # in the form of a dns check, this is the interval in minutes that the dns check will be performed
     # if the dns check fails the VPN will be restarted, this value should be less than the rotate_minutes value
-    dns_check_minutes: 1
+    network_check_minutes: 1
     preferred_configs:
-    - "my_expressvpn_austria_udp.ovpn"
-    - "my_expressvpn_denmark_udp.ovpn"
-    - "my_expressvpn_finland_udp.ovpn"
-    - "my_expressvpn_france_-_alsace_udp.ovpn"
-    - "my_expressvpn_france_-_marseille_udp.ovpn"
-    - "my_expressvpn_germany_-_frankfurt_-_1_udp.ovpn"
-    - "my_expressvpn_germany_-_frankfurt_-_3_udp.ovpn"
-    - "my_expressvpn_germany_-_nuremberg_udp.ovpn"
-    - "my_expressvpn_italy_-_cosenza_udp.ovpn"
-    - "my_expressvpn_luxembourg_udp.ovpn"
-    - "my_expressvpn_monaco_udp.ovpn"
-    - "my_expressvpn_netherlands_-_amsterdam_udp.ovpn"
-    - "my_expressvpn_netherlands_-_rotterdam_udp.ovpn"
-    - "my_expressvpn_netherlands_-_the_hague_udp.ovpn"
-    - "my_expressvpn_norway_udp.ovpn"
-    - "my_expressvpn_portugal_udp.ovpn"
-    - "my_expressvpn_spain_-_madrid_udp.ovpn"
-    - "my_expressvpn_sweden_-_2_udp.ovpn"
-    - "my_expressvpn_sweden_udp.ovpn"
-    - "my_expressvpn_switzerland_-_2_udp.ovpn"
-    - "my_expressvpn_switzerland_udp.ovpn"
+      # ProtonVPN TCP Configs Europe
+
+
+
+      # ExpressVPN UDP Configs Europe
+#    - "my_expressvpn_austria_udp.ovpn"
+#    - "my_expressvpn_denmark_udp.ovpn"
+#    - "my_expressvpn_finland_udp.ovpn"
+#    - "my_expressvpn_france_-_alsace_udp.ovpn"
+#    - "my_expressvpn_france_-_marseille_udp.ovpn"
+#    - "my_expressvpn_germany_-_frankfurt_-_1_udp.ovpn"
+#    - "my_expressvpn_germany_-_frankfurt_-_3_udp.ovpn"
+#    - "my_expressvpn_germany_-_nuremberg_udp.ovpn"
+#    - "my_expressvpn_italy_-_cosenza_udp.ovpn"
+#    - "my_expressvpn_luxembourg_udp.ovpn"
+#    - "my_expressvpn_monaco_udp.ovpn"
+#    - "my_expressvpn_netherlands_-_amsterdam_udp.ovpn"
+#    - "my_expressvpn_netherlands_-_rotterdam_udp.ovpn"
+#    - "my_expressvpn_netherlands_-_the_hague_udp.ovpn"
+#    - "my_expressvpn_norway_udp.ovpn"
+#    - "my_expressvpn_portugal_udp.ovpn"
+#    - "my_expressvpn_spain_-_madrid_udp.ovpn"
+#    - "my_expressvpn_sweden_-_2_udp.ovpn"
+#    - "my_expressvpn_sweden_udp.ovpn"
+#    - "my_expressvpn_switzerland_-_2_udp.ovpn"
+#    - "my_expressvpn_switzerland_udp.ovpn"
 
     # The following command will return a list of host addresses that have failed to resolve, this can happen when the VPN provider no longer supports that URL and the config file is out of date.
     # You should run this if you experience issues with the VPN not connecting and then remove the offending config files from the preferred_configs list.

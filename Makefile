@@ -1,4 +1,4 @@
-VERSION := 1.5.0-3
+VERSION := 1.6.0
 PACKAGE_NAME := pvs
 DEBIAN_PACKAGE_DIR := bin/$(PACKAGE_NAME)_$(VERSION)_amd64
 DEBIAN_CONTROL_FILE_SRC := package_metadata/control
@@ -21,11 +21,14 @@ setup_build_environment:
 	@mkdir -p $(CONFIG_DIR)
 	@mkdir -p $(SYSTEMD_DIR)
 	@mkdir -p $(LOG_DIR)
+	@mkdir -p $(BUILD_DIR)/expressvpn
+	@mkdir -p $(BUILD_DIR)/protonvpn
 	@touch $(CONFIG_DIR)/openvpn-credentials.txt
 	@touch $(LOG_DIR)/$(PACKAGE_NAME).log
 	@touch $(CONFIG_DIR)/openvpn-credentials.txt
 	@chmod 600 $(CONFIG_DIR)/openvpn-credentials.txt
-	@cp -r vpnclient/openvpn/expressvpn/vpn_configs $(BUILD_DIR)/vpn_configs
+	@cp -r vpnclient/openvpn/expressvpn/vpn_configs $(BUILD_DIR)/expressvpn/vpn_configs
+	@cp -r vpnclient/openvpn/protonvpn/vpn_configs $(BUILD_DIR)/protonvpn/vpn_configs
 	@cp -r pvs.service $(SYSTEMD_DIR)
 
 

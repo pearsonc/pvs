@@ -1,4 +1,4 @@
-package expressvpn
+package openvpn
 
 import (
 	"fmt"

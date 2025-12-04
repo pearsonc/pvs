@@ -1,4 +1,4 @@
-package expressvpn
+package openvpn
 
 type configFileManager struct {
 	dir              string

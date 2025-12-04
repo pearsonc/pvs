@@ -1,8 +1,9 @@
 package app_config
 
 import (
-	"github.com/spf13/viper"
 	"pearson-vpn-service/logconfig"
+
+	"github.com/spf13/viper"
 )
 
 var Config *viper.Viper
