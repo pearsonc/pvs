@@ -10,7 +10,7 @@ import (
 	"pearson-vpn-service/firewall"
 	"pearson-vpn-service/logconfig"
 	"pearson-vpn-service/supervisor"
-	"pearson-vpn-service/vpnclient/openvpn/expressvpn"
+	"pearson-vpn-service/vpnclient/openvpn"
 	"strings"
 	"time"
 )
@@ -22,8 +22,9 @@ type Message struct {
 
 func NewClient() (Client, error) {
 	ProcessManager := supervisor.NewManager()
-	conf, err := expressvpn.NewConfigFileManager()
+	conf, err := openvpn.NewConfigFileManager()
 	FirewallManager := firewall.NewFirewallManager()
+	BinaryOutput := app_config.Config.GetBool("openvpn.config_dir")
 	if err != nil {
 		return nil, fmt.Errorf("error creating config manager: %w", err)
 	}
@@ -32,6 +33,7 @@ func NewClient() (Client, error) {
 		processManager:  ProcessManager,
 		firewallManager: FirewallManager,
 		configManager:   conf,
+		binaryOutput:    BinaryOutput,
 	}, nil
 }
 func (vpn *client) StartVPN() error {
@@ -77,7 +79,7 @@ func (vpn *client) startOpenVPN() error {
 	go vpn.EnableAutoRotateVPN()
 	ctx, cancel := context.WithCancel(context.Background())
 	vpn.dnsCheckCancel = cancel
-	go vpn.StartDNSCheck(ctx)
+	go vpn.StartNetworkCheck(ctx)
 
 	return nil
 }
@@ -189,6 +191,9 @@ func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
 	go func() {
 		for scanner.Scan() {
 			line := scanner.Text()
+			if vpn.binaryOutput {
+				logconfig.Log.Info(line)
+			}
 			if strings.Contains(line, "RTNETLINK") {
 				continue
 			}
@@ -229,35 +234,61 @@ func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
 	}
 }
 
-func checkDNSResolution(domain string) error {
-	_, err := net.LookupHost(domain)
-	return err
-}
-func (vpn *client) StartDNSCheck(ctx context.Context) {
+func checkTCPReachability(target string) error {
+	// Use a short, conservative timeout for the connection attempt.
+	timeout := 5 * time.Second
 
-	checkPeriod := app_config.Config.GetInt64("openvpn.dns_check_minutes")
+	// net.DialTimeout attempts to establish a connection.
+	// We use "tcp" protocol to ensure general network health is checked.
+	conn, err := net.DialTimeout("tcp", target, timeout)
+
+	if err != nil {
+		return err
+	}
+
+	// If the connection was successful, close it immediately and return nil error.
+	if conn != nil {
+		err := conn.Close()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (vpn *client) StartNetworkCheck(ctx context.Context) {
+
+	// Target a reliable host and port for a network check (e.g., Google HTTPS)
+	const checkTarget = "www.google.com:443"
+
+	checkPeriod := app_config.Config.GetInt64("openvpn.network_check_minutes")
 
 	if checkPeriod <= 0 {
 		checkPeriod = 1
 	}
-	logconfig.Log.Info("Enabling dns resolution checks every: ", checkPeriod, " minute(s)")
+
+	logconfig.Log.Info("Enabling network reachability checks every: ", checkPeriod, " minute(s)")
 	ticker := time.NewTicker(time.Duration(checkPeriod) * time.Minute)
 	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
-			logconfig.Log.Info("Stopping DNS resolution check...")
+			logconfig.Log.Info("Stopping network reachability check...")
 			return
+
 		case <-ticker.C:
-			if err := checkDNSResolution("www.google.com"); err != nil {
-				logconfig.Log.Warn("DNS resolution failed: ", err)
+			if err := checkTCPReachability(checkTarget); err != nil {
+				logconfig.Log.Warn("Network reachability check failed: ", err)
+
+				// The VPN is down/unresponsive, rotate the connection
 				err := vpn.RotateVPN()
 				if err != nil {
 					logconfig.Log.Errorf("Error rotating VPN connection: %v\n", err)
 					return
 				}
 			} else {
-				logconfig.Log.Info("DNS resolution check succeeded")
+				logconfig.Log.Info("Network reachability check succeeded")
 			}
 		}
 	}
