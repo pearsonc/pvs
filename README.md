@@ -1,6 +1,6 @@
 # 🛡️ PVS: The Automated VPN Rotator, Management, and Monitoring Service
 
-**PVS (Project VPN Switcher)** is a robust daemon designed for Ubuntu-based systems that automatically manages, monitors, and rotates OpenVPN connections to enhance privacy and ensure consistent connectivity.
+**PVS (Pearson VPN Service)** is a robust daemon designed for Ubuntu-based systems that automatically manages, monitors, and rotates OpenVPN connections to enhance privacy and ensure consistent connectivity.
 
 PVS currently supports **ExpressVPN** and **ProtonVPN**.
 
@@ -160,4 +160,5 @@ Monitor the service status and troubleshoot any connection or rotation issues by
 tail -f /var/log/pvs.log
 
 sudo journalctl -u pvs.service -f
+
 ```
