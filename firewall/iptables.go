@@ -55,12 +55,18 @@ func (f *firewall) StopTraffic() error {
 	}{
 		{[]string{"-A", "OUTPUT", "-j", "DROP"}, "block all outgoing traffic"},
 		{[]string{"-I", "OUTPUT", "-o", f.adpName, "-j", "ACCEPT"}, "allow outgoing traffic on " + f.adpName},
-		{[]string{"-I", "OUTPUT", "-p", "udp", "--dport", "1195", "-j", "ACCEPT"}, "allow UPP outgoing traffic on port 1195"},
-		{[]string{"-I", "OUTPUT", "-p", "tcp", "--dport", "1195", "-j", "ACCEPT"}, "allow TCP outgoing traffic on port 1195"},
+		{[]string{"-I", "OUTPUT", "-p", "udp", "--dport", "1195", "-j", "ACCEPT"}, "allow UDP outgoing traffic on port 1195 (ExpressVPN)"},
+		{[]string{"-I", "OUTPUT", "-p", "tcp", "--dport", "1195", "-j", "ACCEPT"}, "allow TCP outgoing traffic on port 1195 (ExpressVPN)"},
+		{[]string{"-I", "OUTPUT", "-p", "udp", "--dport", "1194", "-j", "ACCEPT"}, "allow UDP outgoing traffic on port 1194 (ProtonVPN)"},
+		{[]string{"-I", "OUTPUT", "-p", "udp", "--dport", "80", "-j", "ACCEPT"}, "allow UDP outgoing traffic on port 80 (ProtonVPN)"},
+		{[]string{"-I", "OUTPUT", "-p", "udp", "--dport", "4569", "-j", "ACCEPT"}, "allow UDP outgoing traffic on port 4569 (ProtonVPN)"},
+		{[]string{"-I", "OUTPUT", "-p", "udp", "--dport", "5060", "-j", "ACCEPT"}, "allow UDP outgoing traffic on port 5060 (ProtonVPN)"},
+		{[]string{"-I", "OUTPUT", "-p", "udp", "--dport", "51820", "-j", "ACCEPT"}, "allow UDP outgoing traffic on port 51820 (ProtonVPN)"},
 		{[]string{"-I", "OUTPUT", "-p", "udp", "--dport", "53", "-j", "ACCEPT"}, "allow UDP outgoing traffic on port 53"},
 		{[]string{"-I", "OUTPUT", "-p", "tcp", "--dport", "53", "-j", "ACCEPT"}, "allow TCP outgoing traffic on port 53"},
 		{[]string{"-I", "OUTPUT", "1", "-o", "lo", "-j", "ACCEPT"}, "Allow loopback traffic for resolve conf to work"},
 		{[]string{"-I", "INPUT", "1", "-i", "lo", "-j", "ACCEPT"}, "Allow loopback traffic for resolve conf to work"},
+		{[]string{"-I", "INPUT", "-i", f.adpName, "-p", "tcp", "-s", f.privateNetwork, "--dport", "9999", "-j", "ACCEPT"}, "allow SSH from private network on port 9999"},
 	}); cmdErr != nil {
 		return fmt.Errorf("could not execute commands: %w", cmdErr)
 	}
