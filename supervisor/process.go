@@ -2,6 +2,7 @@ package supervisor
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -10,10 +11,12 @@ import (
 	"time"
 )
 
-func NewProcess(name string, args ...string) Process {
-
+func NewProcess(name string, args ...string) (Process, error) {
 	cmd := exec.Command(name, args...)
-	stdout, _ := cmd.StdoutPipe()
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create stdout pipe for process %s: %w", name, err)
+	}
 	stderr, _ := cmd.StderrPipe()
 
 	return &process{
@@ -23,7 +26,7 @@ func NewProcess(name string, args ...string) Process {
 		status: Initialising,
 		stdout: stdout,
 		stderr: stderr,
-	}
+	}, nil
 }
 
 func (p *process) reinitialise() error {
@@ -44,9 +47,7 @@ func (p *process) reinitialise() error {
 		}
 	}
 	p.status = Restarting
-	//p.output.Reset()
 	p.cmd = exec.Command(p.id, p.args...)
-	//p.cmd.Stdout = p.output
 	time.Sleep(2 * time.Second)
 	p.mutex.Unlock()
 	err := p.Start()

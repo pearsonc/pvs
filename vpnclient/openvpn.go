@@ -26,7 +26,7 @@ func NewClient() (Client, error) {
 	ProcessManager := supervisor.NewManager()
 	conf, err := openvpn.NewConfigFileManager()
 	FirewallManager := firewall.NewFirewallManager()
-	BinaryOutput := app_config.Config.GetBool("openvpn.config_dir")
+	BinaryOutput := app_config.Config.GetBool("openvpn.output")
 	if err != nil {
 		return nil, fmt.Errorf("error creating config manager: %w", err)
 	}
@@ -61,8 +61,12 @@ func (vpn *client) StartVPN() error {
 }
 func (vpn *client) startOpenVPN() error {
 	connectionArgs := []string{"--config", vpn.GetConfigDir() + vpn.GetActiveConfig(), "--auth-nocache"}
-	vpn.processId = vpn.processManager.CreateProcess(vpn.binary, connectionArgs...)
-	err := vpn.processManager.StartProcess(vpn.processId)
+	processId, err := vpn.processManager.CreateProcess(vpn.binary, connectionArgs...)
+	if err != nil {
+		return fmt.Errorf("failed to create VPN process: %w", err)
+	}
+	vpn.processId = processId
+	err = vpn.processManager.StartProcess(vpn.processId)
 	if err != nil {
 		return err
 	}
@@ -205,11 +209,8 @@ func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
 			if strings.Contains(line, "Initialization Sequence Completed") {
 				ch <- Message{Success: true}
 				return
-			} else if strings.Contains(line, "DEPRECATED OPTION:") || strings.Contains(line, "WARNING:") {
-				ch <- Message{Line: line}
-			} else {
-				ch <- Message{Line: line}
 			}
+			ch <- Message{Line: line}
 		}
 		if err := scanner.Err(); err != nil {
 			ch <- Message{Line: err.Error()}

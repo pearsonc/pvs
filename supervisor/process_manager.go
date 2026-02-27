@@ -12,12 +12,15 @@ func NewManager() ProcessManager {
 	}
 }
 
-func (pm *processManager) CreateProcess(name string, args ...string) string {
+func (pm *processManager) CreateProcess(name string, args ...string) (string, error) {
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
-	p := NewProcess(name, args...)
+	p, err := NewProcess(name, args...)
+	if err != nil {
+		return "", fmt.Errorf("failed to create process %s: %w", name, err)
+	}
 	pm.processes[p.GetProcessID()] = p
-	return p.GetProcessID()
+	return p.GetProcessID(), nil
 }
 
 func (pm *processManager) StartProcess(id string) error {

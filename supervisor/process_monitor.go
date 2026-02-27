@@ -1,7 +1,6 @@
 package supervisor
 
 import (
-	"fmt"
 	"pearson-vpn-service/app_config"
 	"pearson-vpn-service/logconfig"
 	"time"
@@ -45,7 +44,7 @@ func (pm *processMonitor) StartMonitoring() {
 								pm.retryCounts[id] = 0
 							}
 						} else {
-							fmt.Errorf("Maximum restart attempts reached for process %s\n", p.GetProcessID())
+							logconfig.Log.Errorf("Maximum restart attempts reached for process %s", p.GetProcessID())
 						}
 					}
 				}

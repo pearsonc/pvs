@@ -12,7 +12,7 @@ type processManager struct {
 }
 
 type ProcessManager interface {
-	CreateProcess(name string, args ...string) string
+	CreateProcess(name string, args ...string) (string, error)
 	StartProcess(id string) error
 	StopProcess(id string) error
 	ReinitialiseProcess(id string) error
