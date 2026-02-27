@@ -6,12 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"pearson-vpn-service/app_config"
 	"pearson-vpn-service/firewall"
 	"pearson-vpn-service/logconfig"
 	"pearson-vpn-service/supervisor"
 	"pearson-vpn-service/vpnclient/openvpn"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -134,16 +136,16 @@ func (vpn *client) EnableAutoRotateVPN() {
 	for {
 		select {
 		case <-ctx.Done():
-			break
+			return
 		case <-ticker.C:
 			if rotateErr := vpn.RotateVPN(); rotateErr != nil {
 				logconfig.Log.Errorf("Error rotating VPN connection: %v\n", rotateErr)
-				break
+				vpn.requestShutdown()
+				return
 			}
+			return // Successful rotation spawns new goroutine via startOpenVPN
 		}
-		return
 	}
-
 }
 func (vpn *client) RotateVPN() error {
 	logconfig.Log.Info("Rotating VPN connection...")
@@ -182,8 +184,11 @@ func (vpn *client) allowTraffic() {
 func (vpn *client) stopTraffic() {
 	if fireErr := vpn.firewallManager.StopTraffic(); fireErr != nil {
 		logconfig.Log.Fatalf("error stopping traffic: %v", fireErr)
-		panic(fireErr)
 	}
+}
+func (vpn *client) requestShutdown() {
+	logconfig.Log.Info("Retry limits reached, requesting process shutdown for systemd restart...")
+	_ = syscall.Kill(os.Getpid(), syscall.SIGTERM)
 }
 func (vpn *client) waitForConnection(scanner *bufio.Scanner) error {
 	logconfig.Log.Info("Waiting for OpenVPN connection to be established...")
@@ -285,6 +290,7 @@ func (vpn *client) StartNetworkCheck(ctx context.Context) {
 				err := vpn.RotateVPN()
 				if err != nil {
 					logconfig.Log.Errorf("Error rotating VPN connection: %v\n", err)
+					vpn.requestShutdown()
 					return
 				}
 			} else {

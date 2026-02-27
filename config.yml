@@ -14,7 +14,7 @@ firewall:
   # blocks all traffic on the interface except for dns lookups when the vpn is stopped or drops out.
   # This is to prevent all traffic from gaining access to the internet without using the vpn.
   privateNetworkSubnet: "192.168.1.0/24"
-  privateNetworkInterface: "eth1"
+  privateNetworkInterface: "enp2s0"
 
 monitoring:
   process_restart_limit: 3

@@ -12,7 +12,7 @@ func NewFirewallManager() Firewall {
 	privateNetwork := app_config.Config.GetString("firewall.privateNetworkSubnet")
 	enabled := app_config.Config.GetBool("firewall.enabled")
 	if adp == "" {
-		adp = "eth1"
+		adp = "enp2s0"
 	}
 	if privateNetwork == "" {
 		privateNetwork = "192.168.1.0/24"
@@ -54,6 +54,8 @@ func (f *firewall) StopTraffic() error {
 		desc string
 	}{
 		{[]string{"-A", "OUTPUT", "-j", "DROP"}, "block all outgoing traffic"},
+		{[]string{"-I", "INPUT", "-p", "tcp", "-s", f.privateNetwork, "--dport", "9999", "-j", "ACCEPT"}, "allow SSH from private network on port 9999"},
+		{[]string{"-I", "OUTPUT", "-p", "tcp", "--sport", "9999", "-d", f.privateNetwork, "-j", "ACCEPT"}, "allow SSH responses to private network on port 9999"},
 		{[]string{"-I", "OUTPUT", "-o", f.adpName, "-j", "ACCEPT"}, "allow outgoing traffic on " + f.adpName},
 		{[]string{"-I", "OUTPUT", "-p", "udp", "--dport", "1195", "-j", "ACCEPT"}, "allow UDP outgoing traffic on port 1195 (ExpressVPN)"},
 		{[]string{"-I", "OUTPUT", "-p", "tcp", "--dport", "1195", "-j", "ACCEPT"}, "allow TCP outgoing traffic on port 1195 (ExpressVPN)"},
@@ -66,7 +68,6 @@ func (f *firewall) StopTraffic() error {
 		{[]string{"-I", "OUTPUT", "-p", "tcp", "--dport", "53", "-j", "ACCEPT"}, "allow TCP outgoing traffic on port 53"},
 		{[]string{"-I", "OUTPUT", "1", "-o", "lo", "-j", "ACCEPT"}, "Allow loopback traffic for resolve conf to work"},
 		{[]string{"-I", "INPUT", "1", "-i", "lo", "-j", "ACCEPT"}, "Allow loopback traffic for resolve conf to work"},
-		{[]string{"-I", "INPUT", "-i", f.adpName, "-p", "tcp", "-s", f.privateNetwork, "--dport", "9999", "-j", "ACCEPT"}, "allow SSH from private network on port 9999"},
 	}); cmdErr != nil {
 		return fmt.Errorf("could not execute commands: %w", cmdErr)
 	}
