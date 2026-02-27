@@ -81,7 +81,9 @@ func (vpn *client) startOpenVPN() error {
 	}
 	vpn.allowTraffic()
 	logconfig.Log.Println("Enabling VPN process monitor...")
-	vpn.processManager.StartMonitor()
+	vpn.processManager.StartMonitor(func(processID string) {
+		logconfig.Log.Warnf("Process %s failed, recovery not yet wired", processID)
+	})
 	go vpn.EnableAutoRotateVPN()
 	ctx, cancel := context.WithCancel(context.Background())
 	vpn.dnsCheckCancel = cancel
