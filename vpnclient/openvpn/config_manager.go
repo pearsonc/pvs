@@ -37,12 +37,11 @@ func NewConfigFileManager() (ConfigFileManager, error) {
 func (config *configFileManager) Initialise() error {
 	file, err := config.getRandomConfigFile()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to select config file: %w", err)
 	}
 	config.fileName = file
-	err = config.validateConfigFile()
-	if err != nil {
-		return err
+	if err := config.validateConfigFile(); err != nil {
+		return fmt.Errorf("failed to validate config file %s: %w", config.fileName, err)
 	}
 	return nil
 }
@@ -89,21 +88,20 @@ func (config *configFileManager) getRandomConfigFile() (string, error) {
 	}
 }
 func (config *configFileManager) validateConfigFile() error {
-
 	if err := config.setupResolveConf(); err != nil {
-		return err
+		return fmt.Errorf("resolv.conf setup failed: %w", err)
 	}
 	if err := config.setupCiphersAndCerts(); err != nil {
-		return err
+		return fmt.Errorf("cipher/cert setup failed: %w", err)
 	}
 	if err := config.setupAuthUserPath(); err != nil {
-		return err
+		return fmt.Errorf("auth-user-pass setup failed: %w", err)
 	}
 	if err := config.setupDefaultGateway(); err != nil {
-		return err
+		return fmt.Errorf("default gateway setup failed: %w", err)
 	}
 	if err := config.setupKeepAlive(); err != nil {
-		return err
+		return fmt.Errorf("keepalive setup failed: %w", err)
 	}
 	return nil
 }
@@ -183,7 +181,7 @@ func (config *configFileManager) setupAuthUserPath() error {
 
 	content, err := os.ReadFile(filePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read config file %s for auth-user-pass setup: %w", filePath, err)
 	}
 	lines := strings.Split(string(content), "\n")
 	desiredLine := "auth-user-pass /config/openvpn-credentials.txt"
