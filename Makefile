@@ -37,7 +37,7 @@ copy_control_file:
 
 build_package:
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o $(BUILD_DIR)/$(PACKAGE_NAME) ./main.go
-	@dpkg --build $(DEBIAN_PACKAGE_DIR)
+	@dpkg --build --root-owner-group $(DEBIAN_PACKAGE_DIR)
 	@echo "Package built at $(DEBIAN_PACKAGE_DIR).deb"
 
 clean:
