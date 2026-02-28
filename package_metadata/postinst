@@ -1,0 +1,59 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    configure)
+        cat <<'INSTRUCTIONS'
+
+================================================================================
+  PVS (Pearson VPN Service) — Post-Install Setup
+================================================================================
+
+  1. ADD VPN CONFIGS
+
+     Place your .ovpn config files in one of:
+
+       /usr/bin/pvs/protonvpn/vpn_configs/
+       /usr/bin/pvs/expressvpn/vpn_configs/
+
+  2. SET VPN CREDENTIALS
+
+     Edit the credentials file (username on line 1, password on line 2):
+
+       sudo vi /config/openvpn-credentials.txt
+
+     Ensure permissions are restricted:
+
+       sudo chmod 600 /config/openvpn-credentials.txt
+
+  3. EDIT CONFIGURATION
+
+       sudo vi /usr/bin/pvs/config.yml
+
+     Key settings:
+       - openvpn.config_dir     Path to your .ovpn directory
+       - openvpn.preferred_configs  List of preferred .ovpn filenames
+       - firewall.enabled       Set false if single-interface (avoids lockout!)
+       - firewall.privateNetworkSubnet     Your LAN subnet
+       - firewall.privateNetworkInterface  Your LAN interface name
+
+  4. ENABLE AND START
+
+       sudo systemctl daemon-reload
+       sudo systemctl enable pvs.service
+       sudo systemctl start pvs.service
+
+  5. VERIFY
+
+       sudo systemctl status pvs.service
+       tail -f /var/log/pvs.log
+
+  Documentation: /usr/share/doc/pvs/README
+
+================================================================================
+
+INSTRUCTIONS
+        ;;
+esac
+
+exit 0

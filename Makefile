@@ -1,4 +1,4 @@
-VERSION := 1.6.2
+VERSION := 1.6.3
 PACKAGE_NAME := pvs
 DEBIAN_PACKAGE_DIR := bin/$(PACKAGE_NAME)_$(VERSION)_amd64
 DEBIAN_CONTROL_FILE_SRC := package_metadata/control
@@ -21,19 +21,23 @@ setup_build_environment:
 	@mkdir -p $(CONFIG_DIR)
 	@mkdir -p $(SYSTEMD_DIR)
 	@mkdir -p $(LOG_DIR)
-	@mkdir -p $(BUILD_DIR)/expressvpn
-	@mkdir -p $(BUILD_DIR)/protonvpn
+	@mkdir -p $(BUILD_DIR)/expressvpn/vpn_configs
+	@mkdir -p $(BUILD_DIR)/protonvpn/vpn_configs
 	@touch $(CONFIG_DIR)/openvpn-credentials.txt
 	@touch $(LOG_DIR)/$(PACKAGE_NAME).log
-	@touch $(CONFIG_DIR)/openvpn-credentials.txt
 	@chmod 600 $(CONFIG_DIR)/openvpn-credentials.txt
-	@cp -r vpnclient/openvpn/expressvpn/vpn_configs $(BUILD_DIR)/expressvpn/vpn_configs
-	@cp -r vpnclient/openvpn/protonvpn/vpn_configs $(BUILD_DIR)/protonvpn/vpn_configs
+	@# VPN configs (.ovpn) are deployed separately on the target — not bundled in .deb (C4 security fix)
+	@if [ -d vpnclient/openvpn/expressvpn/vpn_configs ]; then cp -r vpnclient/openvpn/expressvpn/vpn_configs/* $(BUILD_DIR)/expressvpn/vpn_configs/ 2>/dev/null || true; fi
+	@if [ -d vpnclient/openvpn/protonvpn/vpn_configs ]; then cp -r vpnclient/openvpn/protonvpn/vpn_configs/* $(BUILD_DIR)/protonvpn/vpn_configs/ 2>/dev/null || true; fi
 	@cp -r pvs.service $(SYSTEMD_DIR)
 
 
 copy_control_file:
 	@cp $(DEBIAN_CONTROL_FILE_SRC) $(DEBIAN_PACKAGE_DIR)/DEBIAN/control
+	@cp package_metadata/postinst $(DEBIAN_PACKAGE_DIR)/DEBIAN/postinst
+	@chmod 755 $(DEBIAN_PACKAGE_DIR)/DEBIAN/postinst
+	@mkdir -p $(DEBIAN_PACKAGE_DIR)/usr/share/doc/$(PACKAGE_NAME)
+	@cp package_metadata/README $(DEBIAN_PACKAGE_DIR)/usr/share/doc/$(PACKAGE_NAME)/README
 
 build_package:
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o $(BUILD_DIR)/$(PACKAGE_NAME) ./main.go
