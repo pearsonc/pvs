@@ -3,11 +3,20 @@ set -e
 
 case "$1" in
     configure)
+        # Stop and disable PVS — it must not run until the user has configured it.
+        # The firewall kill-switch is intentionally left in place to prevent
+        # unprotected traffic reaching the internet without an active VPN.
+        systemctl stop pvs.service 2>/dev/null || true
+        systemctl disable pvs.service 2>/dev/null || true
+
         cat <<'INSTRUCTIONS'
 
 ================================================================================
   PVS (Pearson VPN Service) — Post-Install Setup
 ================================================================================
+
+  PVS has been stopped and disabled. It will NOT start until you
+  complete the setup below and start it manually.
 
   1. ADD VPN CONFIGS
 
