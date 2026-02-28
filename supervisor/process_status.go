@@ -7,11 +7,9 @@ const (
 	Initialising ProcessStatus = iota
 	Running
 	Stopped
-	Restarting
 	Failed
 )
 
 func (ps ProcessStatus) String() string {
-	// Convert the ProcessStatus to a human-readable form.
-	return [...]string{"initialising", "running", "stopped", "restarting", "failed"}[ps]
+	return [...]string{"initialising", "running", "stopped", "failed"}[ps]
 }

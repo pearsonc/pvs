@@ -12,15 +12,13 @@ type processManager struct {
 }
 
 type ProcessManager interface {
-	CreateProcess(name string, args ...string) string
+	CreateProcess(name string, args ...string) (string, error)
 	StartProcess(id string) error
 	StopProcess(id string) error
-	ReinitialiseProcess(id string) error
-	RestartProcess(id string) error
 	GetAllProcesses() map[string]Process
 	GetStatus(id string) (ProcessStatus, error)
 	GetStdoutStream(id string) (io.ReadCloser, error)
-	StartMonitor()
+	StartMonitor(onProcessFailed func(processID string))
 	StopMonitor()
 	IsProcessRunning(id string) bool
 }

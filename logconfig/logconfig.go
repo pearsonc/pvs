@@ -15,8 +15,8 @@ func init() {
 	config = viper.New()
 	config.SetConfigFile("config.yml")
 	if err := config.ReadInConfig(); err != nil {
-		fmt.Errorf("failed to read pvs application config file: %w", err)
-		fmt.Errorf("using stdout for logging")
+		fmt.Println("failed to read pvs application config file:", err)
+		fmt.Println("using stdout for logging")
 	}
 
 	enabled := config.GetBool("logging.enabled")
