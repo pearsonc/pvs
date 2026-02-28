@@ -1,0 +1,122 @@
+PVS (Pearson VPN Service)
+=========================
+
+Automated OpenVPN connection rotator, monitoring, and management service.
+
+Supports ExpressVPN and ProtonVPN configurations.
+
+
+Installation
+------------
+
+    sudo apt-get install -f ./pvs_<version>_amd64.deb
+
+
+Setup
+-----
+
+1. Add VPN Configs
+
+   Place your .ovpn config files in one of the following directories:
+
+     /usr/bin/pvs/protonvpn/vpn_configs/
+     /usr/bin/pvs/expressvpn/vpn_configs/
+
+   Download these from your VPN provider's website. Only .ovpn files are
+   accepted. Set openvpn.config_dir in config.yml to point to the directory
+   you are using.
+
+2. Set VPN Credentials
+
+   Edit the credentials file with your VPN provider's username on line 1
+   and password on line 2:
+
+     sudo vi /config/openvpn-credentials.txt
+
+   Ensure correct permissions:
+
+     sudo chmod 600 /config/openvpn-credentials.txt
+
+3. Edit Configuration
+
+   The main configuration file is at:
+
+     /usr/bin/pvs/config.yml
+
+   Key settings:
+
+     openvpn.config_dir
+       Path to the directory containing your .ovpn files.
+       Default: vpn_configs/ (relative to /usr/bin/pvs/)
+       Example: /usr/bin/pvs/protonvpn/vpn_configs
+
+     openvpn.preferred_configs
+       Optional list of specific .ovpn filenames to rotate through.
+       If empty, PVS selects randomly from all .ovpn files in config_dir.
+
+     openvpn.rotate_minutes
+       How often to rotate to a new VPN server (default: 15).
+
+     openvpn.network_check_minutes
+       How often to perform DNS health checks (default: 1).
+       Should be less than rotate_minutes.
+
+     firewall.enabled
+       WARNING: Set to false if your server has only one network interface,
+       otherwise you will be locked out! The firewall blocks all non-VPN
+       traffic on the specified interface when the VPN is down.
+
+     firewall.privateNetworkSubnet
+       Your LAN subnet (e.g., 192.168.1.0/24).
+
+     firewall.privateNetworkInterface
+       Your LAN-facing network interface name (e.g., enp2s0).
+
+     api.bind_address
+       Address for the HTTP status API (default: 127.0.0.1:8080).
+
+4. Enable and Start
+
+     sudo systemctl daemon-reload
+     sudo systemctl enable pvs.service
+     sudo systemctl start pvs.service
+
+5. Verify
+
+     sudo systemctl status pvs.service
+     tail -f /var/log/pvs.log
+
+
+File Locations
+--------------
+
+  Binary:         /usr/bin/pvs/pvs
+  Configuration:  /usr/bin/pvs/config.yml
+  Credentials:    /config/openvpn-credentials.txt
+  Systemd unit:   /etc/systemd/system/pvs.service
+  Log file:       /var/log/pvs.log
+  VPN configs:    /usr/bin/pvs/<provider>/vpn_configs/*.ovpn
+
+
+Troubleshooting
+---------------
+
+  Check service status:
+    sudo systemctl status pvs.service
+
+  View live logs:
+    tail -f /var/log/pvs.log
+
+  View systemd journal:
+    sudo journalctl -u pvs.service -f
+
+  Find failing VPN hosts:
+    cat /var/log/pvs.log | grep "Cannot resolve host address:" | \
+      sed 's/.*Cannot resolve host address: \([^ ]*\).*/\1/' | \
+      sort | uniq -c | sort -nr
+
+  If the VPN won't connect, check that:
+    - .ovpn files exist in the configured config_dir
+    - Credentials file has correct username/password
+    - resolvconf is installed (required dependency)
+    - The VPN provider still supports the server endpoints in your configs
