@@ -2,9 +2,9 @@ package web
 
 import (
 	"context"
-	"log"
 	"net/http"
-	"os"
+	"pearson-vpn-service/app_config"
+	"pearson-vpn-service/logconfig"
 	"pearson-vpn-service/vpnclient"
 )
 
@@ -21,15 +21,16 @@ func (s *Server) Start(ctx context.Context) {
 
 	http.HandleFunc("/", s.handleStatus)
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080" // Default port if not specified
+	bindAddress := app_config.Config.GetString("api.bind_address")
+	if bindAddress == "" {
+		bindAddress = "127.0.0.1:8080"
 	}
 
-	server := &http.Server{Addr: ":" + port}
+	server := &http.Server{Addr: bindAddress}
 
 	go func() {
-		log.Fatal(server.ListenAndServe())
+		// [Rule: Log to Files] Use zerolog instead of log.Fatal
+		logconfig.Log.Fatal().Err(server.ListenAndServe()).Msg("HTTP API server stopped")
 	}()
 
 	<-ctx.Done()
