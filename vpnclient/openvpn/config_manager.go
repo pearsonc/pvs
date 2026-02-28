@@ -2,10 +2,10 @@ package openvpn
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"pearson-vpn-service/app_config"
 	"pearson-vpn-service/logconfig"
 	"strings"
@@ -29,7 +29,7 @@ func NewConfigFileManager() (ConfigFileManager, error) {
 		preferredConfigs: app_config.Config.GetStringSlice("openvpn.preferred_configs"),
 	}
 	if err := ConfigFile.Initialise(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("config file manager initialisation failed: %w", err)
 	}
 	return ConfigFile, nil
 }
@@ -37,12 +37,11 @@ func NewConfigFileManager() (ConfigFileManager, error) {
 func (config *configFileManager) Initialise() error {
 	file, err := config.getRandomConfigFile()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to select config file: %w", err)
 	}
 	config.fileName = file
-	err = config.validateConfigFile()
-	if err != nil {
-		return err
+	if err := config.validateConfigFile(); err != nil {
+		return fmt.Errorf("failed to validate config file %s: %w", config.fileName, err)
 	}
 	return nil
 }
@@ -54,56 +53,68 @@ func (config *configFileManager) getRandomConfigFile() (string, error) {
 
 	if len(config.preferredConfigs) > 0 {
 		selectedConfig := config.preferredConfigs[rand.Intn(len(config.preferredConfigs))]
-		fileName := selectedConfig
+		// [Rule: Trace Before Fix] C6: sanitise to prevent path traversal via preferred_configs
+		fileName := filepath.Base(selectedConfig)
+		if !strings.HasSuffix(fileName, ".ovpn") {
+			return "", fmt.Errorf("preferred config rejected: %q is not a .ovpn file", fileName)
+		}
 
-		logconfig.Log.Info("Preferred config files found, selected at random:", fileName)
+		logconfig.Log.Infof("Preferred config file selected at random: %s", fileName)
 		if _, err := os.Stat(config.dir + fileName); err == nil {
 			return fileName, nil
 		} else {
-			return "", fmt.Errorf("the config file you provided does not exist: %v", fileName)
+			return "", fmt.Errorf("preferred config file does not exist: %s", fileName)
 		}
-	} else { // No Preferred configs found, move on and randomly select any
+	} else { // No preferred configs found, randomly select any .ovpn file
 		dir, err := os.Open(config.dir)
 		if err != nil {
-			return "", fmt.Errorf("failed to open directory: %v", err)
+			return "", fmt.Errorf("failed to open config directory %s: %w", config.dir, err)
 		}
 		defer func(dir *os.File) {
-			err := dir.Close()
-			if err != nil {
-				log.Fatalf("error closing directory with error: %v", err)
+			if err := dir.Close(); err != nil {
+				// [Rule: Log to Files] Use logrus instead of log.Fatalf
+				logconfig.Log.Errorf("Failed to close config directory: %v", err)
 			}
 		}(dir)
 
-		files, err := dir.Readdirnames(0) // 0 to read all files and folders
+		files, err := dir.Readdirnames(0)
 		if err != nil {
-			return "", fmt.Errorf("failed to list files in directory: %v", err)
+			return "", fmt.Errorf("failed to list files in config directory: %w", err)
 		}
 
-		if len(files) == 0 {
-			return "", fmt.Errorf("no config files found in directory")
+		// Filter to only .ovpn files
+		var ovpnFiles []string
+		for _, f := range files {
+			if strings.HasSuffix(f, ".ovpn") {
+				ovpnFiles = append(ovpnFiles, f)
+			}
 		}
 
-		randomFile := files[r.Intn(len(files))]
-		logconfig.Log.Info("No preferred config files found, selected a random file from config dir:", randomFile)
+		if len(ovpnFiles) == 0 {
+			return "", fmt.Errorf("no .ovpn config files found in directory %s", config.dir)
+		}
+
+		// [Rule: Trace Before Fix] C6: sanitise to prevent path traversal
+		randomFile := filepath.Base(ovpnFiles[r.Intn(len(ovpnFiles))])
+		logconfig.Log.Infof("No preferred configs, selected random .ovpn file: %s", randomFile)
 		return randomFile, nil
 	}
 }
 func (config *configFileManager) validateConfigFile() error {
-
 	if err := config.setupResolveConf(); err != nil {
-		return err
+		return fmt.Errorf("resolv.conf setup failed: %w", err)
 	}
 	if err := config.setupCiphersAndCerts(); err != nil {
-		return err
+		return fmt.Errorf("cipher/cert setup failed: %w", err)
 	}
 	if err := config.setupAuthUserPath(); err != nil {
-		return err
+		return fmt.Errorf("auth-user-pass setup failed: %w", err)
 	}
 	if err := config.setupDefaultGateway(); err != nil {
-		return err
+		return fmt.Errorf("default gateway setup failed: %w", err)
 	}
 	if err := config.setupKeepAlive(); err != nil {
-		return err
+		return fmt.Errorf("keepalive setup failed: %w", err)
 	}
 	return nil
 }
@@ -183,7 +194,7 @@ func (config *configFileManager) setupAuthUserPath() error {
 
 	content, err := os.ReadFile(filePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read config file %s for auth-user-pass setup: %w", filePath, err)
 	}
 	lines := strings.Split(string(content), "\n")
 	desiredLine := "auth-user-pass /config/openvpn-credentials.txt"
@@ -199,7 +210,10 @@ func (config *configFileManager) setupAuthUserPath() error {
 		lines = append(lines, desiredLine)
 	}
 	updatedContent := strings.Join(lines, "\n")
-	return os.WriteFile(filePath, []byte(updatedContent), 0644)
+	if err := os.WriteFile(filePath, []byte(updatedContent), 0644); err != nil {
+		return fmt.Errorf("failed to write auth-user-pass config to %s: %w", filePath, err)
+	}
+	return nil
 }
 
 func (config *configFileManager) setupDefaultGateway() error {

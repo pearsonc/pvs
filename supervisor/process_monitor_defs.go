@@ -2,18 +2,12 @@ package supervisor
 
 import "sync"
 
-var (
-	instance *processMonitor
-	once     sync.Once
-)
-
 type processMonitor struct {
-	processManager ProcessManager
-	checkInterval  int
-	stopChan       chan struct{}
-	retry          int
-	retryCounts    map[string]int
-	mutex          sync.Mutex
+	processManager  ProcessManager
+	checkInterval   int
+	stopChan        chan struct{}
+	onProcessFailed func(processID string)
+	mutex           sync.Mutex
 }
 
 type ProcessMonitor interface {

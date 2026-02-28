@@ -12,16 +12,13 @@ type process struct {
 	args   []string
 	status ProcessStatus
 	stdout io.ReadCloser
-	stderr io.ReadCloser
+	done   chan struct{}
 	mutex  sync.Mutex
 }
 
 type Process interface {
-	reinitialise() error
 	Start() error
 	Stop() error
-	Restart() error
-	wait()
 	GetStatus() ProcessStatus
 	GetProcessID() string
 	GetStdoutStream() io.ReadCloser

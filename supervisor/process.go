@@ -1,20 +1,20 @@
 package supervisor
 
 import (
-	"errors"
+	"fmt"
 	"io"
-	"os"
 	"os/exec"
 	"pearson-vpn-service/logconfig"
 	"syscall"
 	"time"
 )
 
-func NewProcess(name string, args ...string) Process {
-
+func NewProcess(name string, args ...string) (Process, error) {
 	cmd := exec.Command(name, args...)
-	stdout, _ := cmd.StdoutPipe()
-	stderr, _ := cmd.StderrPipe()
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create stdout pipe for process %s: %w", name, err)
+	}
 
 	return &process{
 		cmd:    cmd,
@@ -22,101 +22,66 @@ func NewProcess(name string, args ...string) Process {
 		args:   args,
 		status: Initialising,
 		stdout: stdout,
-		stderr: stderr,
-	}
+		done:   make(chan struct{}),
+	}, nil
 }
 
-func (p *process) reinitialise() error {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-	logconfig.Log.Infof("Reinitialising process %s\n", p.id)
-	if p.cmd.Process != nil {
-		if err := p.cmd.Process.Signal(syscall.Signal(0)); err != nil {
-			if errors.Is(err, os.ErrProcessDone) {
-				logconfig.Log.Infof("Process %s has finished.\n", p.id)
-			} else {
-				logconfig.Log.Warnf("Error signaling process %s (it might be dead): %v\n", p.id, err)
-			}
-		} else {
-			if err1 := p.cmd.Process.Kill(); err != nil {
-				return err1
-			}
-		}
-	}
-	p.status = Restarting
-	//p.output.Reset()
-	p.cmd = exec.Command(p.id, p.args...)
-	//p.cmd.Stdout = p.output
-	time.Sleep(2 * time.Second)
-	p.mutex.Unlock()
-	err := p.Start()
-	p.mutex.Lock()
-	if err != nil {
-		return err
-	}
-	return nil
-}
 func (p *process) Start() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	if p.status != Initialising && p.status != Stopped && p.status != Restarting {
-		return errors.New("process already started or not in a restartable state")
+	if p.status != Initialising && p.status != Stopped {
+		return fmt.Errorf("cannot start process %s: status is %s", p.id, p.status.String())
 	}
 
-	err := p.cmd.Start()
-	if err != nil {
+	logconfig.Log.Infof("Starting process %s", p.id)
+	if err := p.cmd.Start(); err != nil {
 		p.status = Failed
-		return err
+		return fmt.Errorf("failed to start process %s: %w", p.id, err)
 	}
 
 	p.status = Running
+	logconfig.Log.Infof("Process %s started successfully (pid %d)", p.id, p.cmd.Process.Pid)
 	go p.wait()
 	return nil
 }
+
 func (p *process) Stop() error {
 	p.mutex.Lock()
-	defer p.mutex.Unlock()
-
 	if p.status != Running {
-		return errors.New("process not running")
+		p.mutex.Unlock()
+		return fmt.Errorf("cannot stop process %s: status is %s", p.id, p.status.String())
 	}
-
-	err := p.cmd.Process.Signal(syscall.SIGTERM)
-	if err != nil {
-		return err
+	logconfig.Log.Infof("Sending SIGTERM to process %s", p.id)
+	if err := p.cmd.Process.Signal(syscall.SIGTERM); err != nil {
+		p.mutex.Unlock()
+		return fmt.Errorf("failed to send SIGTERM to process %s: %w", p.id, err)
 	}
-
 	p.status = Stopped
+	p.mutex.Unlock()
+
+	logconfig.Log.Infof("Waiting for process %s to exit", p.id)
+	select {
+	case <-p.done:
+		logconfig.Log.Infof("Process %s exited after SIGTERM", p.id)
+	case <-time.After(10 * time.Second):
+		logconfig.Log.Warnf("Process %s did not exit in 10s, sending SIGKILL", p.id)
+		_ = p.cmd.Process.Kill()
+		<-p.done
+		logconfig.Log.Infof("Process %s exited after SIGKILL", p.id)
+	}
 	return nil
 }
-func (p *process) Restart() error {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
 
-	if p.status != Running {
-		return errors.New("process not running")
-	}
-
-	err := p.cmd.Process.Signal(syscall.SIGTERM)
-	if err != nil {
-		return err
-	}
-
-	p.status = Restarting
-	return p.Start()
-
-}
 func (p *process) wait() {
 	err := p.cmd.Wait()
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	if err != nil {
-		// Log the error, or handle it as needed
+	if err != nil && p.status != Stopped {
+		logconfig.Log.Warnf("Process %s exited unexpectedly: %v", p.id, err)
 		p.status = Failed
-	} else {
-		p.status = Stopped
 	}
+	close(p.done)
 }
 
 func (p *process) GetStatus() ProcessStatus {
@@ -124,6 +89,7 @@ func (p *process) GetStatus() ProcessStatus {
 	defer p.mutex.Unlock()
 	return p.status
 }
+
 func (p *process) GetStdoutStream() io.ReadCloser {
 	return p.stdout
 }

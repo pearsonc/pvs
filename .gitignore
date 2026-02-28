@@ -1,4 +1,6 @@
 .idea
 bin/
 openvpn-credentials.txt
+*.ovpn
+vpn_configs/
 

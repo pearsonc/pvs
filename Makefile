@@ -1,4 +1,4 @@
-VERSION := 1.6.1
+VERSION := 1.6.2
 PACKAGE_NAME := pvs
 DEBIAN_PACKAGE_DIR := bin/$(PACKAGE_NAME)_$(VERSION)_amd64
 DEBIAN_CONTROL_FILE_SRC := package_metadata/control
@@ -37,7 +37,7 @@ copy_control_file:
 
 build_package:
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o $(BUILD_DIR)/$(PACKAGE_NAME) ./main.go
-	@dpkg --build $(DEBIAN_PACKAGE_DIR)
+	@dpkg-deb --root-owner-group --build $(DEBIAN_PACKAGE_DIR)
 	@echo "Package built at $(DEBIAN_PACKAGE_DIR).deb"
 
 clean:
