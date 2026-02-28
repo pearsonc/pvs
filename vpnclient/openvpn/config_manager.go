@@ -59,7 +59,7 @@ func (config *configFileManager) getRandomConfigFile() (string, error) {
 			return "", fmt.Errorf("preferred config rejected: %q is not a .ovpn file", fileName)
 		}
 
-		logconfig.Log.Info().Str("file", fileName).Msg("Preferred config file selected at random")
+		logconfig.Log.Infof("Preferred config file selected at random: %s", fileName)
 		if _, err := os.Stat(config.dir + fileName); err == nil {
 			return fileName, nil
 		} else {
@@ -72,8 +72,8 @@ func (config *configFileManager) getRandomConfigFile() (string, error) {
 		}
 		defer func(dir *os.File) {
 			if err := dir.Close(); err != nil {
-				// [Rule: Log to Files] Use zerolog instead of log.Fatalf
-				logconfig.Log.Error().Err(err).Msg("Failed to close config directory")
+				// [Rule: Log to Files] Use logrus instead of log.Fatalf
+				logconfig.Log.Errorf("Failed to close config directory: %v", err)
 			}
 		}(dir)
 
@@ -96,7 +96,7 @@ func (config *configFileManager) getRandomConfigFile() (string, error) {
 
 		// [Rule: Trace Before Fix] C6: sanitise to prevent path traversal
 		randomFile := filepath.Base(ovpnFiles[r.Intn(len(ovpnFiles))])
-		logconfig.Log.Info().Str("file", randomFile).Msg("No preferred configs, selected random .ovpn file")
+		logconfig.Log.Infof("No preferred configs, selected random .ovpn file: %s", randomFile)
 		return randomFile, nil
 	}
 }

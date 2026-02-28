@@ -29,8 +29,8 @@ func (s *Server) Start(ctx context.Context) {
 	server := &http.Server{Addr: bindAddress}
 
 	go func() {
-		// [Rule: Log to Files] Use zerolog instead of log.Fatal
-		logconfig.Log.Fatal().Err(server.ListenAndServe()).Msg("HTTP API server stopped")
+		// [Rule: Log to Files] Use logrus instead of log.Fatal
+		logconfig.Log.Fatalf("HTTP API server stopped: %v", server.ListenAndServe())
 	}()
 
 	<-ctx.Done()
